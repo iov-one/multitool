@@ -45,6 +45,7 @@
     "typescript": "~3.5"
   },
   "devDependencies": {
+    "@types/bn.js": "^4.11.5",
     "@types/react": "^16.8.25",
     "@types/react-bootstrap-typeahead": "^3.4.5",
     "@types/react-dom": "^16.8.5",

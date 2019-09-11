@@ -17,6 +17,7 @@ import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 
 import { getPubkeyFromLedger } from "./ledger";
+import { Decimal } from "./util/decimal";
 
 interface CreateProps {
   readonly chainId: ChainId;
@@ -34,18 +35,32 @@ interface CreateState {
 
 type FormField = "multisigContractId" | "recipient" | "quantity" | "memo";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const emptyState: CreateState = {
+  creatorHex: "",
+  formMultisigContractId: "",
+  formRecipient: "",
+  formQuantity: "",
+  formMemo: "",
+  unsignedTransactionJson: null,
+  encodingError: null,
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const testingState: CreateState = {
+  creatorHex: "",
+  formMultisigContractId: "21",
+  formRecipient: "iov1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqp396zjw",
+  formQuantity: "100.56",
+  formMemo: "What a wonderful day",
+  unsignedTransactionJson: null,
+  encodingError: null,
+};
+
 class Create extends React.Component<CreateProps, CreateState> {
   public constructor(props: CreateProps) {
     super(props);
-    this.state = {
-      creatorHex: "",
-      formMultisigContractId: "21",
-      formRecipient: "",
-      formQuantity: "",
-      formMemo: "",
-      unsignedTransactionJson: null,
-      encodingError: null,
-    };
+    this.state = { ...testingState };
   }
 
   public componentDidUpdate(): void {
@@ -69,7 +84,7 @@ class Create extends React.Component<CreateProps, CreateState> {
           },
         },
         amount: {
-          quantity: this.state.formQuantity || "0",
+          quantity: Decimal.fromUserInput(this.state.formQuantity, 9).getQuantity(),
           fractionalDigits: 9,
           tokenTicker: "IOV" as TokenTicker,
         },
@@ -143,7 +158,7 @@ class Create extends React.Component<CreateProps, CreateState> {
                   value={this.state.formMultisigContractId}
                   onChange={e => this.handleFormChange("multisigContractId", e)}
                 />
-                <small className="form-text text-muted">Use 16 characters hex format, e.g. 42</small>
+                <small className="form-text text-muted">Use integer format, e.g. 42</small>
                 <div className="invalid-feedback">Please choose a username.</div>
               </div>
 
@@ -168,12 +183,12 @@ class Create extends React.Component<CreateProps, CreateState> {
                   id="quantityInput"
                   className="form-control"
                   type="text"
-                  placeholder="68687686"
+                  placeholder="100.56"
                   value={this.state.formQuantity}
                   onChange={e => this.handleFormChange("quantity", e)}
                 />
                 <small className="form-text text-muted">
-                  Quantity in atomics, e.g. 1500000000 for 1.5 IOV
+                  Quantity in atomics, e.g. 100.56 for 100.56 IOV
                 </small>
               </div>
 
@@ -188,7 +203,7 @@ class Create extends React.Component<CreateProps, CreateState> {
                   onChange={e => this.handleFormChange("memo", e)}
                 />
                 <small id="emailHelp" className="form-text text-muted">
-                  IOV address, e.g. iov1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqp396zjw
+                  Arbitrary text attached to the transaction
                 </small>
               </div>
 
