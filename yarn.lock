@@ -1026,10 +1026,10 @@
     type-tagger "^1.0.0"
     xstream "^11.10.0"
 
-"@iov/ledger-bns@^0.14.1":
-  version "0.14.1"
-  resolved "https://registry.yarnpkg.com/@iov/ledger-bns/-/ledger-bns-0.14.1.tgz#7d3c7cd849b89e12872acfc2f6d4baa73b4d9dd1"
-  integrity sha512-KErmLiicPvQPpefBAxq/XFfQ4fNp5HqCY2IxrJCACVM03doPZ2DBUQx9AaZ2CgGWzM/xA8CpAn1vRREEeXrhAw==
+"@iov/ledger-bns@^0.14.2":
+  version "0.14.2"
+  resolved "https://registry.yarnpkg.com/@iov/ledger-bns/-/ledger-bns-0.14.2.tgz#88d5b03f0324194e71eadce33410c0a201feb771"
+  integrity sha512-039asDyhyEqxD/ZCVFQVZ4/gp3Mn31/8MjIMqJSM0sRfZFakg7ZP9BT3v/NOc/Ai9OgEMwgq6zm+twB+agXGRA==
   dependencies:
     "@types/ledgerhq__hw-transport" "^4.21.2"
 
