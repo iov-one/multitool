@@ -16,7 +16,7 @@ import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 
-import { getPubkeyFromLedger } from "./ledger";
+import { createAndSign, getPubkeyFromLedger } from "./ledger";
 import { Decimal } from "./util/decimal";
 
 interface CreateProps {
@@ -207,7 +207,12 @@ class Create extends React.Component<CreateProps, CreateState> {
                 </small>
               </div>
 
-              <button type="submit" className="btn btn-primary">
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={!this.state.unsignedTransactionJson}
+                onClick={() => this.signAndContinue()}
+              >
                 Sign and continue
               </button>
             </form>
@@ -260,6 +265,18 @@ class Create extends React.Component<CreateProps, CreateState> {
         this.setState({ creatorHex: Encoding.toHex(response.pubkey) });
       },
       error => console.warn(error),
+    );
+  }
+
+  private signAndContinue(): void {
+    if (!this.state.unsignedTransactionJson) throw new Error("unsigned transaction not set");
+    createAndSign(this.state.unsignedTransactionJson).then(
+      signed => {
+        console.log(signed);
+        const hex = Encoding.toHex(Encoding.toUtf8(signed));
+        console.log("Hex representation", hex);
+      },
+      error => console.error(error),
     );
   }
 }
