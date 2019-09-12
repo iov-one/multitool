@@ -1,7 +1,15 @@
 import BN from "bn.js";
 
+/**
+ * A type for arbitrary precision, non-negative decimals.
+ *
+ * Instances of this class are immutable.
+ */
 export class Decimal {
   public static fromUserInput(input: string, fractionalDigits: number): Decimal {
+    if (!Number.isInteger(fractionalDigits)) throw new Error("Fractional digits is not an integer");
+    if (fractionalDigits < 0) throw new Error("Fractional digits must not be negative");
+
     for (let index = 0; index < input.length; index++) {
       if (!input[index].match(/^[0-9.]$/)) {
         throw new Error(`Invalid character at position ${index + 1}`);
@@ -26,7 +34,7 @@ export class Decimal {
   private readonly quantity: BN;
   private readonly fractionalDigits: number;
 
-  public constructor(quantity: string, fractionalDigits: number) {
+  private constructor(quantity: string, fractionalDigits: number) {
     this.quantity = new BN(quantity);
     this.fractionalDigits = fractionalDigits;
   }
