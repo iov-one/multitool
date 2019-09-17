@@ -1,7 +1,8 @@
 import { FullSignature, SendTransaction, SignedTransaction, WithCreator } from "@iov/bcp";
-import { MultisignatureTx } from "@iov/bns";
+import { bnsCodec, MultisignatureTx } from "@iov/bns";
 import { Encoding, TransactionEncoder } from "@iov/encoding";
 import React from "react";
+import Alert from "react-bootstrap/Alert";
 import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
@@ -21,6 +22,7 @@ interface StatusState {
   readonly original: SignedTransaction<SendTransaction & MultisignatureTx & WithCreator> | null;
   readonly signatures: readonly FullSignature[];
   readonly localSignature: string;
+  readonly addSignatureError: string;
 }
 
 class Status extends React.Component<StatusProps, StatusState> {
@@ -30,6 +32,7 @@ class Status extends React.Component<StatusProps, StatusState> {
       original: null,
       signatures: [],
       localSignature: "",
+      addSignatureError: "",
     };
   }
 
@@ -89,32 +92,53 @@ class Status extends React.Component<StatusProps, StatusState> {
             <h2>Signatures</h2>
             <ol>
               {this.state.signatures.map(signature => (
-                <li key={toHex(signature.signature)}>
-                  <code>{toPrintableSignature(signature)}</code>
+                <li key={toHex(signature.pubkey.data)}>
+                  {this.state.original &&
+                    bnsCodec.identityToAddress({
+                      chainId: this.state.original.transaction.creator.chainId,
+                      pubkey: signature.pubkey,
+                    })}
+                  :<code>{toPrintableSignature(signature)}</code>
                 </li>
               ))}
             </ol>
+
             <button
-              className="btn btn-link btn-sm"
+              className="btn btn-link"
               onClick={event => {
                 event.preventDefault();
-                const signature = prompt("Please enter signature");
-                if (signature) {
-                  try {
-                    console.log(signature);
-                    const fullSignature = fromPrintableSignature(signature);
+                this.setState({ addSignatureError: "" });
 
-                    this.setState({
-                      signatures: [...this.state.signatures, fullSignature],
-                    });
-                  } catch (error) {
-                    console.error(error);
+                const signature = prompt("Please enter signature");
+                if (signature === null) return;
+
+                try {
+                  console.log(signature);
+                  const fullSignature = fromPrintableSignature(signature);
+
+                  const existingPubkeys = this.state.signatures.map(sig => toHex(sig.pubkey.data));
+                  if (existingPubkeys.find(pubkeyHex => pubkeyHex === toHex(fullSignature.pubkey.data))) {
+                    throw new Error("Signature of this account already included");
                   }
+
+                  this.setState({
+                    signatures: [...this.state.signatures, fullSignature],
+                  });
+                } catch (error) {
+                  console.error(error);
+                  const errorMessage = error instanceof Error ? error.message : error.toString();
+                  this.setState({ addSignatureError: errorMessage });
                 }
               }}
             >
-              Add
+              Add signature
             </button>
+            <Alert hidden={!this.state.addSignatureError} variant="danger">
+              {this.state.addSignatureError}
+            </Alert>
+
+            <h2>Post to blockchain</h2>
+            <p>The transaction with all signatures from above will be posted to the IOV blockchain.</p>
           </Col>
         </Row>
         <Row>

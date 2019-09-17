@@ -17,6 +17,7 @@ interface SignState {
   readonly transaction: (SendTransaction & MultisignatureTx & WithCreator) | null;
   readonly signatures: readonly FullSignature[];
   readonly localSignature: string;
+  readonly signingError: string;
 }
 
 class Sign extends React.Component<SignProps, SignState> {
@@ -26,6 +27,7 @@ class Sign extends React.Component<SignProps, SignState> {
       transaction: null,
       signatures: [],
       localSignature: "",
+      signingError: "",
     };
   }
 
@@ -65,7 +67,7 @@ class Sign extends React.Component<SignProps, SignState> {
               <textarea
                 className="form-control"
                 id="yourSignature"
-                rows={5}
+                rows={6}
                 value={this.state.localSignature}
                 readOnly={true}
               ></textarea>
@@ -75,8 +77,7 @@ class Sign extends React.Component<SignProps, SignState> {
               className="btn btn-primary"
               onClick={async event => {
                 event.preventDefault();
-
-                this.setState({ localSignature: "" });
+                this.setState({ localSignature: "", signingError: "" });
 
                 try {
                   const signature = await this.createSignature();
@@ -85,6 +86,8 @@ class Sign extends React.Component<SignProps, SignState> {
                   });
                 } catch (error) {
                   console.error(error);
+                  const errorMessage = error instanceof Error ? error.message : error.toString();
+                  this.setState({ signingError: errorMessage });
                 }
               }}
             >
