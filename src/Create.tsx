@@ -74,6 +74,8 @@ class Create extends React.Component<CreateProps, CreateState> {
         Uint8Array.from(multisigId.toBytesBigEndian()),
       );
 
+      if (!this.state.creatorHex) throw new Error("Transaction creator unset");
+
       const tx: SendTransaction & MultisignatureTx & WithCreator = {
         kind: "bcp/send",
         creator: {
@@ -132,8 +134,23 @@ class Create extends React.Component<CreateProps, CreateState> {
             <form>
               <div className="form-group">
                 <label htmlFor="creatorInput">Transaction creator</label>
-                <button className="btn btn-link btn-sm" onClick={() => this.loadCreatorFromLedger()}>
+                <button
+                  className="btn btn-link btn-sm"
+                  onClick={event => {
+                    event.preventDefault();
+                    this.loadCreatorFromLedger();
+                  }}
+                >
                   Get from Ledger
+                </button>
+                <button
+                  className="btn btn-link btn-sm"
+                  onClick={event => {
+                    event.preventDefault();
+                    this.setState({ creatorHex: "" });
+                  }}
+                >
+                  Clear
                 </button>
                 <input
                   id="creatorInput"
@@ -144,7 +161,7 @@ class Create extends React.Component<CreateProps, CreateState> {
                   disabled
                 />
                 <small className="form-text text-muted">
-                  Pubkey of the person who created this transaction.{" "}
+                  Pubkey of the person who creates this transaction
                 </small>
               </div>
 
@@ -262,7 +279,9 @@ class Create extends React.Component<CreateProps, CreateState> {
   private loadCreatorFromLedger(): void {
     getPubkeyFromLedger().then(
       response => {
-        this.setState({ creatorHex: Encoding.toHex(response.pubkey) });
+        const pubkeyHex = Encoding.toHex(response.pubkey);
+        console.log("Received pubkey from Ledger:", pubkeyHex);
+        this.setState({ creatorHex: pubkeyHex });
       },
       error => console.warn(error),
     );
