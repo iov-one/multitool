@@ -17,6 +17,7 @@ import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 
 import { createSigned, getPubkeyFromLedger } from "./ledger";
+import { makeSigningLink, makeStatusLink } from "./links";
 import { Decimal } from "./util/decimal";
 
 interface CreateProps {}
@@ -314,13 +315,9 @@ class Create extends React.Component<CreateProps, CreateState> {
     if (!this.state.unsignedTransactionJson) throw new Error("unsigned transaction not set");
     createSigned(this.state.unsignedTransactionJson).then(
       signed => {
-        console.log(signed);
-        const hex = Encoding.toHex(Encoding.toUtf8(signed));
-        console.log("Hex representation", hex);
-
-        const prefix = window.location.href.split("#")[0];
-        const url = `${prefix}#/status/${hex}`;
-        console.log("Navigate to", url);
+        const signingUrl = makeSigningLink(signed);
+        const statusUrl = makeStatusLink(signed);
+        console.log("Navigate to", signingUrl, statusUrl);
       },
       error => console.error(error),
     );

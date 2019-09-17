@@ -1,77 +1,54 @@
-import {
-  Algorithm,
-  FullSignature,
-  Identity,
-  isSendTransaction,
-  isUnsignedTransaction,
-  PubkeyBytes,
-  SendTransaction,
-  SignedTransaction,
-  WithCreator,
-} from "@iov/bcp";
-import { isMultisignatureTx, MultisignatureTx } from "@iov/bns";
-import { Encoding, isNonNullObject, TransactionEncoder } from "@iov/encoding";
+import { FullSignature, SendTransaction, SignedTransaction, WithCreator } from "@iov/bcp";
+import { MultisignatureTx } from "@iov/bns";
+import { Encoding, TransactionEncoder } from "@iov/encoding";
 import React from "react";
 import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 
-import { createSignature, getPubkeyFromLedger } from "./ledger";
-import { fromPrintableSignature, isFullSignature, toPrintableSignature } from "./signatures";
+import { makeSigningLink } from "./links";
+import {
+  fromPrintableSignature,
+  isSignedMultisignatureSendTransaction,
+  toPrintableSignature,
+} from "./signatures";
 
 const { fromHex, toHex } = Encoding;
 
 interface StatusProps {}
 
 interface StatusState {
-  readonly transaction: (SendTransaction & MultisignatureTx & WithCreator) | null;
+  readonly original: SignedTransaction<SendTransaction & MultisignatureTx & WithCreator> | null;
   readonly signatures: readonly FullSignature[];
   readonly localSignature: string;
-}
-
-function isSignedSendTransaction(data: unknown): data is SignedTransaction<SendTransaction & WithCreator> {
-  if (!isNonNullObject(data)) return false;
-
-  const { transaction, primarySignature, otherSignatures } = data as SignedTransaction;
-
-  if (!isUnsignedTransaction(transaction)) return false;
-  if (!isSendTransaction(transaction)) return false;
-  if (!isFullSignature(primarySignature)) return false;
-  if (!Array.isArray(otherSignatures) || otherSignatures.some(sig => !isFullSignature(sig))) return false;
-
-  return true;
 }
 
 class Status extends React.Component<StatusProps, StatusState> {
   public constructor(props: StatusProps) {
     super(props);
     this.state = {
-      transaction: null,
+      original: null,
       signatures: [],
       localSignature: "",
     };
   }
 
   public componentDidMount(): void {
-    if (!this.state.transaction) {
-      const href = window.location.href;
-      console.log(href);
-
-      const matches = href.match(/\/status\/([a-f0-9]+)/);
+    if (!this.state.original) {
+      const matches = window.location.href.match(/\/status\/([a-f0-9]+)/);
       if (matches && matches.length >= 2) {
         const payload = fromHex(matches[1]);
         console.log(`Got payload of ${payload.length} bytes`);
         const signedTransaction = TransactionEncoder.fromJson(JSON.parse(Encoding.fromUtf8(payload)));
-        if (!isSignedSendTransaction(signedTransaction)) {
-          throw new Error("Transaction data is not an SignedTransaction<SendTransaction>");
+        if (!isSignedMultisignatureSendTransaction(signedTransaction)) {
+          throw new Error(
+            "Transaction data is not an SignedTransaction<SendTransaction & MultisignatureTx & WithCreator>",
+          );
         }
 
-        const { transaction, primarySignature, otherSignatures } = signedTransaction;
-
-        if (!isMultisignatureTx(transaction)) throw new Error("Transaction data is not a MultisignatureTx");
-
+        const { primarySignature, otherSignatures } = signedTransaction;
         this.setState({
-          transaction: transaction,
+          original: signedTransaction,
           signatures: [primarySignature, ...otherSignatures],
         });
       }
@@ -82,35 +59,31 @@ class Status extends React.Component<StatusProps, StatusState> {
     return (
       <Container>
         <Row>
-          <Col className="col-6">
-            <h2>Review transaction</h2>
-            <pre>{JSON.stringify(TransactionEncoder.toJson(this.state.transaction), null, 2)}</pre>
-
-            <h2>Create Signature</h2>
+          <Col>
+            <h2>Signing link</h2>
 
             <div className="form-group">
-              <label htmlFor="yourSignature">Your signature</label>
+              <label htmlFor="signingLink">
+                Send this link to every user supposed to sign this transaction
+              </label>
               <textarea
                 className="form-control"
-                id="yourSignature"
-                rows={5}
-                value={this.state.localSignature}
+                id="signingLink"
+                rows={1}
+                value={this.state.original ? makeSigningLink(this.state.original) : ""}
                 readOnly={true}
               ></textarea>
             </div>
-
-            <button
-              className="btn btn-primary"
-              onClick={async event => {
-                event.preventDefault();
-                const signature = await this.createSignature();
-                this.setState({
-                  localSignature: signature,
-                });
-              }}
-            >
-              Sign transaction now
-            </button>
+          </Col>
+        </Row>
+        <Row>
+          <Col className="col-6">
+            <h2>Review transaction</h2>
+            <pre>
+              {this.state.original
+                ? JSON.stringify(TransactionEncoder.toJson(this.state.original.transaction), null, 2)
+                : ""}
+            </pre>
           </Col>
           <Col className="col-6">
             <h2>Signatures</h2>
@@ -149,24 +122,6 @@ class Status extends React.Component<StatusProps, StatusState> {
         </Row>
       </Container>
     );
-  }
-
-  private async createSignature(): Promise<string> {
-    const original = this.state.transaction;
-    if (!original) throw new Error("Transaction not set");
-
-    const pubkeyResponse = await getPubkeyFromLedger();
-
-    const signer: Identity = {
-      chainId: original.creator.chainId,
-      pubkey: {
-        algo: Algorithm.Ed25519,
-        data: pubkeyResponse.pubkey as PubkeyBytes,
-      },
-    };
-
-    const signature = await createSignature(original, signer);
-    return JSON.stringify(TransactionEncoder.toJson(signature));
   }
 }
 
