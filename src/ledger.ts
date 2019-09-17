@@ -7,6 +7,7 @@ import {
   PubkeyBytes,
   SignatureBytes,
   SignedTransaction,
+  UnsignedTransaction,
 } from "@iov/bcp";
 import { bnsCodec, createBnsConnector } from "@iov/bns";
 import { TransactionEncoder } from "@iov/encoding";
@@ -56,13 +57,11 @@ async function getNonce(identity: Identity): Promise<Nonce> {
   return nonce;
 }
 
-export async function createAndSign(unsigned: string): Promise<string> {
-  const transaction = TransactionEncoder.fromJson(JSON.parse(unsigned));
-  if (!isUnsignedTransaction(transaction)) {
-    throw new Error("Invalid transaction format in RPC request to Ledger endpoint.");
-  }
-
-  const nonce = await getNonce(transaction.creator);
+export async function createSignature(
+  transaction: UnsignedTransaction,
+  signer: Identity,
+): Promise<FullSignature> {
+  const nonce = await getNonce(signer);
   const { bytes } = bnsCodec.bytesToSign(transaction, nonce);
 
   const transport = await TransportWebUSB.create(5000);
@@ -74,15 +73,25 @@ export async function createAndSign(unsigned: string): Promise<string> {
   if (!isIovLedgerAppAddress(addressResponse)) throw new Error(addressResponse.errorMessage);
   const signatureResponse = await app.sign(addressIndex, bytes);
   if (!isIovLedgerAppSignature(signatureResponse)) throw new Error(signatureResponse.errorMessage);
-  console.log("isBuffer?", Buffer.isBuffer(signatureResponse.signature));
 
   await transport.close();
 
   const signature: FullSignature = {
-    pubkey: transaction.creator.pubkey,
+    pubkey: signer.pubkey,
     nonce: nonce,
     signature: signatureResponse.signature as SignatureBytes,
   };
+
+  return signature;
+}
+
+export async function createSigned(unsigned: string): Promise<string> {
+  const transaction = TransactionEncoder.fromJson(JSON.parse(unsigned));
+  if (!isUnsignedTransaction(transaction)) {
+    throw new Error("Invalid transaction format in RPC request to Ledger endpoint.");
+  }
+
+  const signature = await createSignature(transaction, transaction.creator);
 
   const signedTransaction: SignedTransaction = {
     transaction: transaction,

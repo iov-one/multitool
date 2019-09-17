@@ -16,15 +16,14 @@ import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 
-import { createAndSign, getPubkeyFromLedger } from "./ledger";
+import { createSigned, getPubkeyFromLedger } from "./ledger";
 import { Decimal } from "./util/decimal";
 
-interface CreateProps {
-  readonly chainId: ChainId;
-}
+interface CreateProps {}
 
 interface CreateState {
   readonly creatorHex: string;
+  readonly chainId: string;
   readonly formMultisigContractId: string;
   readonly formRecipient: string;
   readonly formQuantity: string;
@@ -33,11 +32,12 @@ interface CreateState {
   readonly encodingError: string | null;
 }
 
-type FormField = "multisigContractId" | "recipient" | "quantity" | "memo";
+type FormField = "chainId" | "multisigContractId" | "recipient" | "quantity" | "memo";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const emptyState: CreateState = {
   creatorHex: "",
+  chainId: "iov-mainnet",
   formMultisigContractId: "",
   formRecipient: "",
   formQuantity: "",
@@ -49,6 +49,7 @@ const emptyState: CreateState = {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const testingState: CreateState = {
   creatorHex: "",
+  chainId: "iov-boarnet",
   formMultisigContractId: "21",
   formRecipient: "iov1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqp396zjw",
   formQuantity: "100.56",
@@ -70,7 +71,7 @@ class Create extends React.Component<CreateProps, CreateState> {
       const multisigId = Uint64.fromString(this.state.formMultisigContractId);
 
       const sender = multisignatureIdToAddress(
-        this.props.chainId,
+        this.state.chainId as ChainId,
         Uint8Array.from(multisigId.toBytesBigEndian()),
       );
 
@@ -79,7 +80,7 @@ class Create extends React.Component<CreateProps, CreateState> {
       const tx: SendTransaction & MultisignatureTx & WithCreator = {
         kind: "bcp/send",
         creator: {
-          chainId: this.props.chainId,
+          chainId: this.state.chainId as ChainId,
           pubkey: {
             algo: Algorithm.Ed25519,
             data: Encoding.fromHex(this.state.creatorHex) as PubkeyBytes,
@@ -166,6 +167,19 @@ class Create extends React.Component<CreateProps, CreateState> {
               </div>
 
               <div className="form-group">
+                <label htmlFor="chainIdInput">Chain ID</label>
+                <select
+                  className="form-control"
+                  id="chainIdInput"
+                  value={this.state.chainId}
+                  onChange={e => this.handleFormChange("chainId", e)}
+                >
+                  <option>iov-mainnet</option>
+                  <option>iov-boarnet</option>
+                </select>
+              </div>
+
+              <div className="form-group">
                 <label htmlFor="senderInput">Multisig contract ID</label>
                 <input
                   id="senderInput"
@@ -228,7 +242,10 @@ class Create extends React.Component<CreateProps, CreateState> {
                 type="submit"
                 className="btn btn-primary"
                 disabled={!this.state.unsignedTransactionJson}
-                onClick={() => this.signAndContinue()}
+                onClick={event => {
+                  event.preventDefault();
+                  this.signAndContinue();
+                }}
               >
                 Sign and continue
               </button>
@@ -255,10 +272,16 @@ class Create extends React.Component<CreateProps, CreateState> {
     );
   }
 
-  private handleFormChange(field: FormField, event: React.ChangeEvent<HTMLInputElement>): void {
+  private handleFormChange(
+    field: FormField,
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ): void {
     const newValue = event.target.value;
 
     switch (field) {
+      case "chainId":
+        this.setState({ chainId: newValue });
+        break;
       case "multisigContractId":
         this.setState({ formMultisigContractId: newValue });
         break;
@@ -289,11 +312,15 @@ class Create extends React.Component<CreateProps, CreateState> {
 
   private signAndContinue(): void {
     if (!this.state.unsignedTransactionJson) throw new Error("unsigned transaction not set");
-    createAndSign(this.state.unsignedTransactionJson).then(
+    createSigned(this.state.unsignedTransactionJson).then(
       signed => {
         console.log(signed);
         const hex = Encoding.toHex(Encoding.toUtf8(signed));
         console.log("Hex representation", hex);
+
+        const prefix = window.location.href.split("#")[0];
+        const url = `${prefix}#/status/${hex}`;
+        console.log("Navigate to", url);
       },
       error => console.error(error),
     );
