@@ -84,7 +84,7 @@ class Create extends React.Component<CreateProps, CreateState> {
           },
         },
         amount: {
-          quantity: Decimal.fromUserInput(this.state.formQuantity, 9).getQuantity(),
+          quantity: Decimal.fromUserInput(this.state.formQuantity, 9).atomics,
           fractionalDigits: 9,
           tokenTicker: "IOV" as TokenTicker,
         },
