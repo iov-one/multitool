@@ -15,14 +15,14 @@ interface SignaturesListPros {
 class SignaturesList extends React.Component<SignaturesListPros, {}> {
   public render(): JSX.Element {
     return (
-      <ol>
+      <ol className="list-group mb-3">
         {this.props.signatures.map(signature => (
-          <li key={toHex(signature.pubkey.data)}>
+          <li className="list-group-item" key={toHex(signature.pubkey.data)}>
             {bnsCodec.identityToAddress({
               chainId: this.props.chainId,
               pubkey: signature.pubkey,
             })}
-            :<code>{toPrintableSignature(signature)}</code>
+            : <code>{toPrintableSignature(signature)}</code>
           </li>
         ))}
       </ol>
