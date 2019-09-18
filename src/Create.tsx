@@ -33,6 +33,9 @@ interface CreateState {
   readonly formMemo: string;
   readonly unsignedTransactionJson: string | null;
   readonly encodingError: string | null;
+  readonly getPubkeyError?: string;
+  readonly signingError?: string;
+  readonly signing: boolean;
   readonly statusUrl?: string;
 }
 
@@ -48,6 +51,7 @@ const emptyState: CreateState = {
   formMemo: "",
   unsignedTransactionJson: null,
   encodingError: null,
+  signing: false,
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -60,6 +64,7 @@ const testingState: CreateState = {
   formMemo: "What a wonderful day",
   unsignedTransactionJson: null,
   encodingError: null,
+  signing: false,
 };
 
 class Create extends React.Component<CreateProps, CreateState> {
@@ -144,7 +149,7 @@ class Create extends React.Component<CreateProps, CreateState> {
                   className="btn btn-link btn-sm"
                   onClick={event => {
                     event.preventDefault();
-                    this.loadCreatorFromLedger();
+                    this.reloadCreatorFromLedger();
                   }}
                 >
                   Get from Ledger
@@ -153,7 +158,7 @@ class Create extends React.Component<CreateProps, CreateState> {
                   className="btn btn-link btn-sm"
                   onClick={event => {
                     event.preventDefault();
-                    this.setState({ creatorHex: "" });
+                    this.clearCreator();
                   }}
                 >
                   Clear
@@ -170,6 +175,10 @@ class Create extends React.Component<CreateProps, CreateState> {
                   Pubkey of the person who creates this transaction
                 </small>
               </div>
+
+              <Alert hidden={!this.state.getPubkeyError} variant="danger">
+                {this.state.getPubkeyError}
+              </Alert>
 
               <div className="form-group">
                 <label htmlFor="chainIdInput">Chain ID</label>
@@ -243,17 +252,27 @@ class Create extends React.Component<CreateProps, CreateState> {
                 </small>
               </div>
 
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={!this.state.unsignedTransactionJson}
-                onClick={event => {
-                  event.preventDefault();
-                  this.signAndContinue();
-                }}
-              >
-                Sign and continue
-              </button>
+              <p>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={this.state.signing || !this.state.unsignedTransactionJson}
+                  onClick={event => {
+                    event.preventDefault();
+                    this.signAndContinue();
+                  }}
+                >
+                  Sign and continue
+                </button>
+              </p>
+
+              <Alert hidden={!this.state.signing} variant="info">
+                Please sign transaction using Ledger device now
+              </Alert>
+
+              <Alert hidden={!this.state.signingError} variant="danger">
+                {this.state.signingError}
+              </Alert>
             </form>
           </Col>
           <Col className="col-6">
@@ -304,26 +323,56 @@ class Create extends React.Component<CreateProps, CreateState> {
     }
   }
 
-  private loadCreatorFromLedger(): void {
+  private clearCreator(): void {
+    this.setState({
+      creatorHex: "",
+      getPubkeyError: undefined,
+    });
+  }
+
+  private reloadCreatorFromLedger(): void {
+    this.clearCreator();
+
     getPubkeyFromLedger().then(
       response => {
         const pubkeyHex = Encoding.toHex(response.pubkey);
         console.log("Received pubkey from Ledger:", pubkeyHex);
         this.setState({ creatorHex: pubkeyHex });
       },
-      error => console.warn(error),
+      error => {
+        console.info("Full error message", error);
+        const errorMessage = error instanceof Error ? error.message : error.toString();
+        this.setState({
+          getPubkeyError: errorMessage,
+        });
+      },
     );
   }
 
   private signAndContinue(): void {
+    this.setState({
+      signingError: undefined,
+      signing: true,
+    });
+
     if (!this.state.unsignedTransactionJson) throw new Error("unsigned transaction not set");
     createSigned(this.state.unsignedTransactionJson).then(
       signed => {
         const statusUrl = makeStatusLink(signed);
         console.log("Navigating to", statusUrl);
-        this.setState({ statusUrl: statusUrl });
+        this.setState({
+          statusUrl: statusUrl,
+          signing: false,
+        });
       },
-      error => console.error(error),
+      error => {
+        console.info("Full error message", error);
+        const errorMessage = error instanceof Error ? error.message : error.toString();
+        this.setState({
+          signingError: errorMessage,
+          signing: false,
+        });
+      },
     );
   }
 }

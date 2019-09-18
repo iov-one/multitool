@@ -104,36 +104,39 @@ class Status extends React.Component<StatusProps, StatusState> {
               ))}
             </ol>
 
-            <button
-              className="btn btn-link"
-              onClick={event => {
-                event.preventDefault();
-                this.setState({ addSignatureError: "" });
+            <p>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={event => {
+                  event.preventDefault();
+                  this.setState({ addSignatureError: "" });
 
-                const signature = prompt("Please enter signature");
-                if (signature === null) return;
+                  const signature = prompt("Please enter signature");
+                  if (signature === null) return;
 
-                try {
-                  console.log(signature);
-                  const fullSignature = fromPrintableSignature(signature);
+                  try {
+                    console.log(signature);
+                    const fullSignature = fromPrintableSignature(signature);
 
-                  const existingPubkeys = this.state.signatures.map(sig => toHex(sig.pubkey.data));
-                  if (existingPubkeys.find(pubkeyHex => pubkeyHex === toHex(fullSignature.pubkey.data))) {
-                    throw new Error("Signature of this account already included");
+                    const existingPubkeys = this.state.signatures.map(sig => toHex(sig.pubkey.data));
+                    if (existingPubkeys.find(pubkeyHex => pubkeyHex === toHex(fullSignature.pubkey.data))) {
+                      throw new Error("Signature of this account already included");
+                    }
+
+                    this.setState({
+                      signatures: [...this.state.signatures, fullSignature],
+                    });
+                  } catch (error) {
+                    console.info("Full error message", error);
+                    const errorMessage = error instanceof Error ? error.message : error.toString();
+                    this.setState({ addSignatureError: errorMessage });
                   }
+                }}
+              >
+                Add signature
+              </button>
+            </p>
 
-                  this.setState({
-                    signatures: [...this.state.signatures, fullSignature],
-                  });
-                } catch (error) {
-                  console.error(error);
-                  const errorMessage = error instanceof Error ? error.message : error.toString();
-                  this.setState({ addSignatureError: errorMessage });
-                }
-              }}
-            >
-              Add signature
-            </button>
             <Alert hidden={!this.state.addSignatureError} variant="danger">
               {this.state.addSignatureError}
             </Alert>

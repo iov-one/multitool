@@ -2,6 +2,7 @@ import { Algorithm, FullSignature, Identity, PubkeyBytes, SendTransaction, WithC
 import { MultisignatureTx } from "@iov/bns";
 import { Encoding, TransactionEncoder } from "@iov/encoding";
 import React from "react";
+import Alert from "react-bootstrap/Alert";
 import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
@@ -18,7 +19,8 @@ interface SignState {
   readonly transaction: (SendTransaction & MultisignatureTx & WithCreator) | null;
   readonly signatures: readonly FullSignature[];
   readonly localSignature: string;
-  readonly signingError: string;
+  readonly signingError?: string;
+  readonly signing: boolean;
 }
 
 class Sign extends React.Component<SignProps, SignState> {
@@ -28,7 +30,7 @@ class Sign extends React.Component<SignProps, SignState> {
       transaction: null,
       signatures: [],
       localSignature: "",
-      signingError: "",
+      signing: false,
     };
   }
 
@@ -74,26 +76,40 @@ class Sign extends React.Component<SignProps, SignState> {
               ></textarea>
             </div>
 
-            <button
-              className="btn btn-primary"
-              onClick={async event => {
-                event.preventDefault();
-                this.setState({ localSignature: "", signingError: "" });
+            <p>
+              <button
+                className="btn btn-primary"
+                onClick={async event => {
+                  event.preventDefault();
+                  this.setState({ localSignature: "", signingError: undefined, signing: true });
 
-                try {
-                  const signature = await this.createSignature();
-                  this.setState({
-                    localSignature: signature,
-                  });
-                } catch (error) {
-                  console.error(error);
-                  const errorMessage = error instanceof Error ? error.message : error.toString();
-                  this.setState({ signingError: errorMessage });
-                }
-              }}
-            >
-              Sign transaction now
-            </button>
+                  try {
+                    const signature = await this.createSignature();
+                    this.setState({
+                      localSignature: signature,
+                      signing: false,
+                    });
+                  } catch (error) {
+                    console.info("Full error message", error);
+                    const errorMessage = error instanceof Error ? error.message : error.toString();
+                    this.setState({
+                      signingError: errorMessage,
+                      signing: false,
+                    });
+                  }
+                }}
+              >
+                Sign transaction now
+              </button>
+            </p>
+
+            <Alert hidden={!this.state.signing} variant="info">
+              Please sign transaction using Ledger device now
+            </Alert>
+
+            <Alert hidden={!this.state.signingError} variant="danger">
+              {this.state.signingError}
+            </Alert>
           </Col>
         </Row>
         <Row>
