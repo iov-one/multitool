@@ -1,11 +1,8 @@
 import {
-  ChainConnector,
-  ChainId,
   FullSignature,
   Identity,
   isSendTransaction,
   isUnsignedTransaction,
-  Nonce,
   PubkeyBytes,
   SendTransaction,
   SignatureBytes,
@@ -13,7 +10,7 @@ import {
   UnsignedTransaction,
   WithCreator,
 } from "@iov/bcp";
-import { bnsCodec, createBnsConnector, isMultisignatureTx, MultisignatureTx } from "@iov/bns";
+import { bnsCodec, isMultisignatureTx, MultisignatureTx } from "@iov/bns";
 import { TransactionEncoder } from "@iov/encoding";
 import {
   IovLedgerApp,
@@ -23,7 +20,7 @@ import {
 } from "@iov/ledger-bns";
 import TransportWebUSB from "@ledgerhq/hw-transport-webusb";
 
-import { chains } from "../settings";
+import { getNonce } from "./connection";
 
 const addressIndex = 0;
 
@@ -56,22 +53,6 @@ export async function getPubkeyFromLedger(
   } finally {
     await transport.close();
   }
-}
-
-async function getConnector(chainId: ChainId): Promise<ChainConnector> {
-  const chain = chains.get(chainId);
-  if (!chain) throw new Error("Chain not found");
-
-  const bnsConnector = createBnsConnector(chain.nodeUrl, chainId as ChainId);
-  return bnsConnector;
-}
-
-async function getNonce(identity: Identity): Promise<Nonce> {
-  const connector = await getConnector(identity.chainId);
-  const bnsConnection = await connector.establishConnection();
-  const nonce = await bnsConnection.getNonce({ pubkey: identity.pubkey });
-  bnsConnection.disconnect();
-  return nonce;
 }
 
 export async function createSignature(

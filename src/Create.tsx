@@ -1,4 +1,13 @@
-import { Address, Algorithm, ChainId, Nonce, PubkeyBytes, SendTransaction, WithCreator } from "@iov/bcp";
+import {
+  Address,
+  Algorithm,
+  Amount,
+  ChainId,
+  Nonce,
+  PubkeyBytes,
+  SendTransaction,
+  WithCreator,
+} from "@iov/bcp";
 import { bnsCodec, multisignatureIdToAddress, MultisignatureTx } from "@iov/bns";
 import { Encoding, TransactionEncoder, Uint64 } from "@iov/encoding";
 import React from "react";
@@ -9,6 +18,8 @@ import Row from "react-bootstrap/Row";
 import { Redirect } from "react-router";
 
 import { chains } from "./settings";
+import { amountToString } from "./util/amounts";
+import { getBalance } from "./util/connection";
 import { Decimal } from "./util/decimal";
 import { prettyPrintJson } from "./util/json";
 import { createSigned, getPubkeyFromLedger } from "./util/ledger";
@@ -29,6 +40,11 @@ interface CreateState {
   readonly signingError?: string;
   readonly signing: boolean;
   readonly statusUrl?: string;
+  readonly lastQueriedMultisigContractId?: string;
+  readonly contractInfo?: {
+    readonly address: Address;
+    readonly balance: readonly Amount[] | undefined;
+  };
 }
 
 type FormField = "chainId" | "multisigContractId" | "recipient" | "quantity" | "memo";
@@ -69,17 +85,34 @@ class Create extends React.Component<CreateProps, CreateState> {
     let encodingError: string | null = null;
 
     try {
-      const multisigId = Uint64.fromString(this.state.formMultisigContractId);
+      const chain = chains.get(this.state.chainId);
+      if (!chain) throw new Error("No configuration for theis chain ID found");
 
+      if (this.state.lastQueriedMultisigContractId !== this.state.formMultisigContractId) {
+        this.setState({
+          lastQueriedMultisigContractId: this.state.formMultisigContractId,
+          contractInfo: undefined,
+        });
+
+        getBalance(chain.id, Uint64.fromString(this.state.formMultisigContractId).toNumber())
+          .then(({ address, balance }) => {
+            this.setState({
+              contractInfo: {
+                address: address,
+                balance: balance,
+              },
+            });
+          })
+          .catch(error => console.error(error));
+      }
+
+      const multisigId = Uint64.fromString(this.state.formMultisigContractId);
       const sender = multisignatureIdToAddress(
         this.state.chainId as ChainId,
         Uint8Array.from(multisigId.toBytesBigEndian()),
       );
 
       if (!this.state.creatorHex) throw new Error("Transaction creator unset");
-
-      const chain = chains.get(this.state.chainId);
-      if (!chain) throw new Error("No configuration for theis chain ID found");
 
       if (!this.state.formRecipient.startsWith(chain.recipientPrefix)) {
         throw new Error(`Recipient address with prefix '${chain.recipientPrefix}' expected`);
@@ -268,6 +301,18 @@ class Create extends React.Component<CreateProps, CreateState> {
             </form>
           </Col>
           <Col className="col-6">
+            <h3>Multisig contract info</h3>
+            {this.state.contractInfo && (
+              <p>
+                Address: {this.state.contractInfo.address}
+                <br />
+                Balance:{" "}
+                {this.state.contractInfo.balance
+                  ? this.state.contractInfo.balance.map(amountToString).join(", ")
+                  : "–"}
+              </p>
+            )}
+
             <h3>Details</h3>
             {this.state.unsignedTransactionJson && (
               <div>

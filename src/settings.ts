@@ -1,6 +1,7 @@
-import { Amount, TokenTicker } from "@iov/bcp";
+import { Amount, ChainId, TokenTicker } from "@iov/bcp";
 
 export interface ChainInfo {
+  readonly id: ChainId;
   readonly tokenTicker: TokenTicker;
   readonly fee: Amount;
   readonly nodeUrl: string;
@@ -10,9 +11,26 @@ export interface ChainInfo {
 
 type Chain = [string, ChainInfo];
 
+const devnet: Chain = [
+  "local-iov-devnet",
+  {
+    id: "local-iov-devnet" as ChainId,
+    tokenTicker: "CASH" as TokenTicker,
+    fee: {
+      quantity: "100000000",
+      fractionalDigits: 9,
+      tokenTicker: "CASH" as TokenTicker,
+    },
+    nodeUrl: "http://localhost:23456/",
+    networkType: "testnet",
+    recipientPrefix: "tiov",
+  },
+];
+
 const boarnet: Chain = [
   "iov-boarnet",
   {
+    id: "iov-boarnet" as ChainId,
     tokenTicker: "IOV" as TokenTicker,
     fee: {
       quantity: "100000000",
@@ -28,6 +46,7 @@ const boarnet: Chain = [
 const mainnet: Chain = [
   "iov-mainnet",
   {
+    id: "iov-mainnet" as ChainId,
     tokenTicker: "IOV" as TokenTicker,
     fee: {
       quantity: "100000000",
@@ -40,4 +59,4 @@ const mainnet: Chain = [
   },
 ];
 
-export const chains = new Map<string, ChainInfo>([boarnet, mainnet]);
+export const chains = new Map<string, ChainInfo>([devnet, boarnet, mainnet]);
