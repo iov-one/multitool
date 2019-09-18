@@ -3,7 +3,7 @@ import { bnsCodec } from "@iov/bns";
 import { Encoding } from "@iov/encoding";
 import React from "react";
 
-import { toPrintableSignature } from "./signatures";
+import { toPrintableSignature } from "./util/signatures";
 
 const { toHex } = Encoding;
 

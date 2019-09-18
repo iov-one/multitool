@@ -7,10 +7,10 @@ import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 
-import { makeSigningLink } from "./links";
-import { fromPrintableSignature, isSignedMultisignatureSendTransaction } from "./signatures";
 import SignaturesList from "./SignaturesList";
 import { prettyPrintJson } from "./util/json";
+import { makeSigningLink } from "./util/links";
+import { fromPrintableSignature, isSignedMultisignatureSendTransaction } from "./util/signatures";
 
 const { fromHex, toHex } = Encoding;
 
