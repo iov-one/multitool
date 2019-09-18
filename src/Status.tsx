@@ -1,5 +1,5 @@
 import { FullSignature, SendTransaction, SignedTransaction, WithCreator } from "@iov/bcp";
-import { bnsCodec, MultisignatureTx } from "@iov/bns";
+import { MultisignatureTx } from "@iov/bns";
 import { Encoding, TransactionEncoder } from "@iov/encoding";
 import React from "react";
 import Alert from "react-bootstrap/Alert";
@@ -8,11 +8,8 @@ import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 
 import { makeSigningLink } from "./links";
-import {
-  fromPrintableSignature,
-  isSignedMultisignatureSendTransaction,
-  toPrintableSignature,
-} from "./signatures";
+import { fromPrintableSignature, isSignedMultisignatureSendTransaction } from "./signatures";
+import SignaturesList from "./SignaturesList";
 import { prettyPrintJson } from "./util/json";
 
 const { fromHex, toHex } = Encoding;
@@ -91,18 +88,12 @@ class Status extends React.Component<StatusProps, StatusState> {
           </Col>
           <Col className="col-6">
             <h2>Signatures</h2>
-            <ol>
-              {this.state.signatures.map(signature => (
-                <li key={toHex(signature.pubkey.data)}>
-                  {this.state.original &&
-                    bnsCodec.identityToAddress({
-                      chainId: this.state.original.transaction.creator.chainId,
-                      pubkey: signature.pubkey,
-                    })}
-                  :<code>{toPrintableSignature(signature)}</code>
-                </li>
-              ))}
-            </ol>
+            {this.state.original && (
+              <SignaturesList
+                chainId={this.state.original.transaction.creator.chainId}
+                signatures={this.state.signatures}
+              />
+            )}
 
             <p>
               <button
