@@ -22,6 +22,8 @@ interface StatusState {
   readonly signatures: readonly FullSignature[];
   readonly localSignature: string;
   readonly addSignatureError: string;
+  readonly posting: boolean;
+  readonly postError?: string;
 }
 
 class Status extends React.Component<StatusProps, StatusState> {
@@ -32,6 +34,7 @@ class Status extends React.Component<StatusProps, StatusState> {
       signatures: [],
       localSignature: "",
       addSignatureError: "",
+      posting: false,
     };
   }
 
@@ -130,6 +133,7 @@ class Status extends React.Component<StatusProps, StatusState> {
             <p>
               <button
                 className="btn btn-primary"
+                disabled={this.state.posting}
                 onClick={event => {
                   event.preventDefault();
                   this.postToChain();
@@ -138,6 +142,10 @@ class Status extends React.Component<StatusProps, StatusState> {
                 Post now
               </button>
             </p>
+
+            <Alert hidden={!this.state.postError} variant="danger">
+              {this.state.postError}
+            </Alert>
           </Col>
         </Row>
         <Row>
@@ -150,11 +158,27 @@ class Status extends React.Component<StatusProps, StatusState> {
   private postToChain(): void {
     if (!this.state.original) throw new Error("Original transaction not set");
     const signed = makeSignedTransaction(this.state.original.transaction, this.state.signatures);
+
+    this.setState({
+      posting: true,
+      postError: undefined,
+    });
     postSignedTransaction(signed).then(
       transactionId => {
         console.log("Successfully posted", transactionId);
+        this.setState({
+          posting: false,
+          postError: undefined,
+        });
       },
-      error => console.error(error),
+      error => {
+        console.info("Full error message", error);
+        const errorMessage = error instanceof Error ? error.message : error.toString();
+        this.setState({
+          posting: false,
+          postError: errorMessage,
+        });
+      },
     );
   }
 }
