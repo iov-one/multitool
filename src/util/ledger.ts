@@ -1,4 +1,5 @@
 import {
+  ChainConnector,
   ChainId,
   FullSignature,
   Identity,
@@ -22,39 +23,52 @@ import {
 } from "@iov/ledger-bns";
 import TransportWebUSB from "@ledgerhq/hw-transport-webusb";
 
+import { chains } from "../settings";
+
 const addressIndex = 0;
-const bnsConnector = createBnsConnector("https://rpc.boarnet.iov.one/", "iov-boarnet" as ChainId);
 
 export interface PubkeyResponse {
   readonly pubkey: PubkeyBytes;
-  readonly network: "mainnet" | "testnet";
 }
 
-export async function getPubkeyFromLedger(): Promise<PubkeyResponse> {
+export async function getPubkeyFromLedger(
+  requiredNetworkType: "testnet" | "mainnet",
+): Promise<PubkeyResponse> {
   const transport = await TransportWebUSB.create(1000);
 
-  const app = new IovLedgerApp(transport);
-  const version = await app.getVersion();
-  if (!isIovLedgerAppVersion(version)) {
-    await transport.close();
-    throw new Error(version.errorMessage);
-  }
-  const response = await app.getAddress(addressIndex);
-  if (!isIovLedgerAppAddress(response)) {
-    await transport.close();
-    throw new Error(response.errorMessage);
-  }
+  try {
+    const app = new IovLedgerApp(transport);
+    const versionResponse = await app.getVersion();
+    if (!isIovLedgerAppVersion(versionResponse)) throw new Error(versionResponse.errorMessage);
+    const responseNetwork = versionResponse.testMode ? "testnet" : "mainnet";
+    if (requiredNetworkType !== responseNetwork) {
+      throw new Error(
+        `Pubkey for ${requiredNetworkType} required but got response from the ${responseNetwork} app`,
+      );
+    }
 
-  await transport.close();
+    const response = await app.getAddress(addressIndex);
+    if (!isIovLedgerAppAddress(response)) throw new Error(response.errorMessage);
 
-  return {
-    pubkey: response.pubkey as PubkeyBytes,
-    network: version.testMode ? "testnet" : "mainnet",
-  };
+    return {
+      pubkey: response.pubkey as PubkeyBytes,
+    };
+  } finally {
+    await transport.close();
+  }
+}
+
+async function getConnector(chainId: ChainId): Promise<ChainConnector> {
+  const chain = chains.get(chainId);
+  if (!chain) throw new Error("Chain not found");
+
+  const bnsConnector = createBnsConnector(chain.nodeUrl, chainId as ChainId);
+  return bnsConnector;
 }
 
 async function getNonce(identity: Identity): Promise<Nonce> {
-  const bnsConnection = await bnsConnector.establishConnection();
+  const connector = await getConnector(identity.chainId);
+  const bnsConnection = await connector.establishConnection();
   const nonce = await bnsConnection.getNonce({ pubkey: identity.pubkey });
   bnsConnection.disconnect();
   return nonce;
@@ -66,26 +80,32 @@ export async function createSignature(
 ): Promise<FullSignature> {
   const nonce = await getNonce(signer);
   const { bytes } = bnsCodec.bytesToSign(transaction, nonce);
+  const requiredNetworkType = signer.chainId === "iov-mainnet" ? "mainnet" : "testnet";
 
   const transport = await TransportWebUSB.create(5000);
 
-  const app = new IovLedgerApp(transport);
-  const versionResponse = await app.getVersion();
-  if (!isIovLedgerAppVersion(versionResponse)) throw new Error(versionResponse.errorMessage);
-  const addressResponse = await app.getAddress(addressIndex);
-  if (!isIovLedgerAppAddress(addressResponse)) throw new Error(addressResponse.errorMessage);
-  const signatureResponse = await app.sign(addressIndex, bytes);
-  if (!isIovLedgerAppSignature(signatureResponse)) throw new Error(signatureResponse.errorMessage);
+  try {
+    const app = new IovLedgerApp(transport);
+    const versionResponse = await app.getVersion();
+    if (!isIovLedgerAppVersion(versionResponse)) throw new Error(versionResponse.errorMessage);
+    const responseNetwork = versionResponse.testMode ? "testnet" : "mainnet";
+    if (requiredNetworkType !== responseNetwork) {
+      throw new Error(
+        `Pubkey for ${requiredNetworkType} required but got response from the ${responseNetwork} app`,
+      );
+    }
 
-  await transport.close();
+    const signatureResponse = await app.sign(addressIndex, bytes);
+    if (!isIovLedgerAppSignature(signatureResponse)) throw new Error(signatureResponse.errorMessage);
 
-  const signature: FullSignature = {
-    pubkey: signer.pubkey,
-    nonce: nonce,
-    signature: signatureResponse.signature as SignatureBytes,
-  };
-
-  return signature;
+    return {
+      pubkey: signer.pubkey,
+      nonce: nonce,
+      signature: signatureResponse.signature as SignatureBytes,
+    };
+  } finally {
+    await transport.close();
+  }
 }
 
 export async function createSigned(

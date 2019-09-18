@@ -7,6 +7,7 @@ import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 
+import { chains } from "./settings";
 import { prettyPrintJson } from "./util/json";
 import { createSignature, getPubkeyFromLedger } from "./util/ledger";
 import { isSignedMultisignatureSendTransaction, toPrintableSignature } from "./util/signatures";
@@ -123,7 +124,10 @@ class Sign extends React.Component<SignProps, SignState> {
     const original = this.state.transaction;
     if (!original) throw new Error("Transaction not set");
 
-    const pubkeyResponse = await getPubkeyFromLedger();
+    const chain = chains.get(original.creator.chainId);
+    if (!chain) throw new Error("Chain not found");
+
+    const pubkeyResponse = await getPubkeyFromLedger(chain.networkType);
 
     const signer: Identity = {
       chainId: original.creator.chainId,

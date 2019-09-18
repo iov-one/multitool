@@ -1,13 +1,4 @@
-import {
-  Address,
-  Algorithm,
-  ChainId,
-  Nonce,
-  PubkeyBytes,
-  SendTransaction,
-  TokenTicker,
-  WithCreator,
-} from "@iov/bcp";
+import { Address, Algorithm, ChainId, Nonce, PubkeyBytes, SendTransaction, WithCreator } from "@iov/bcp";
 import { bnsCodec, multisignatureIdToAddress, MultisignatureTx } from "@iov/bns";
 import { Encoding, TransactionEncoder, Uint64 } from "@iov/encoding";
 import React from "react";
@@ -17,6 +8,7 @@ import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import { Redirect } from "react-router";
 
+import { chains } from "./settings";
 import { Decimal } from "./util/decimal";
 import { prettyPrintJson } from "./util/json";
 import { createSigned, getPubkeyFromLedger } from "./util/ledger";
@@ -86,6 +78,13 @@ class Create extends React.Component<CreateProps, CreateState> {
 
       if (!this.state.creatorHex) throw new Error("Transaction creator unset");
 
+      const chain = chains.get(this.state.chainId);
+      if (!chain) throw new Error("No configuration for theis chain ID found");
+
+      if (!this.state.formRecipient.startsWith(chain.recipientPrefix)) {
+        throw new Error(`Recipient address with prefix '${chain.recipientPrefix}' expected`);
+      }
+
       const tx: SendTransaction & MultisignatureTx & WithCreator = {
         kind: "bcp/send",
         creator: {
@@ -98,18 +97,12 @@ class Create extends React.Component<CreateProps, CreateState> {
         amount: {
           quantity: Decimal.fromUserInput(this.state.formQuantity, 9).atomics,
           fractionalDigits: 9,
-          tokenTicker: "IOV" as TokenTicker,
+          tokenTicker: chain.tokenTicker,
         },
         sender: sender,
         recipient: this.state.formRecipient as Address,
         memo: this.state.formMemo,
-        fee: {
-          tokens: {
-            quantity: "100000000",
-            fractionalDigits: 9,
-            tokenTicker: "IOV" as TokenTicker,
-          },
-        },
+        fee: { tokens: chain.fee },
         multisig: [multisigId.toNumber()],
       };
 
@@ -143,6 +136,20 @@ class Create extends React.Component<CreateProps, CreateState> {
           <Col className="col-6">
             <h3>Enter transaction</h3>
             <form>
+              <div className="form-group">
+                <label htmlFor="chainIdInput">Chain ID</label>
+                <select
+                  className="form-control"
+                  id="chainIdInput"
+                  value={this.state.chainId}
+                  onChange={e => this.handleFormChange("chainId", e)}
+                >
+                  {Array.from(chains.keys()).map(chainId => (
+                    <option>{chainId}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="form-group">
                 <label htmlFor="creatorInput">Transaction creator</label>
                 <button
@@ -179,19 +186,6 @@ class Create extends React.Component<CreateProps, CreateState> {
               <Alert hidden={!this.state.getPubkeyError} variant="danger">
                 {this.state.getPubkeyError}
               </Alert>
-
-              <div className="form-group">
-                <label htmlFor="chainIdInput">Chain ID</label>
-                <select
-                  className="form-control"
-                  id="chainIdInput"
-                  value={this.state.chainId}
-                  onChange={e => this.handleFormChange("chainId", e)}
-                >
-                  <option>iov-mainnet</option>
-                  <option>iov-boarnet</option>
-                </select>
-              </div>
 
               <div className="form-group">
                 <label htmlFor="senderInput">Multisig contract ID</label>
@@ -232,9 +226,7 @@ class Create extends React.Component<CreateProps, CreateState> {
                   value={this.state.formQuantity}
                   onChange={e => this.handleFormChange("quantity", e)}
                 />
-                <small className="form-text text-muted">
-                  Quantity in atomics, e.g. 100.56 for 100.56 IOV
-                </small>
+                <small className="form-text text-muted">Quantity, e.g. 100.56 for 100.56 IOV</small>
               </div>
 
               <div className="form-group">
@@ -333,7 +325,10 @@ class Create extends React.Component<CreateProps, CreateState> {
   private reloadCreatorFromLedger(): void {
     this.clearCreator();
 
-    getPubkeyFromLedger().then(
+    const chain = chains.get(this.state.chainId);
+    if (!chain) throw new Error("Chain not found");
+
+    getPubkeyFromLedger(chain.networkType).then(
       response => {
         const pubkeyHex = Encoding.toHex(response.pubkey);
         console.log("Received pubkey from Ledger:", pubkeyHex);
