@@ -10,14 +10,10 @@ import Row from "react-bootstrap/Row";
 import SignaturesList from "./SignaturesList";
 import { postSignedTransaction } from "./util/connection";
 import { prettyPrintJson } from "./util/json";
-import { makeSigningLink } from "./util/links";
-import {
-  fromPrintableSignature,
-  isSignedMultisignatureSendTransaction,
-  makeSignedTransaction,
-} from "./util/signatures";
+import { fromLinkEncoded, makeSigningLink } from "./util/links";
+import { fromPrintableSignature, makeSignedTransaction } from "./util/signatures";
 
-const { fromHex, toHex } = Encoding;
+const { toHex } = Encoding;
 
 interface StatusProps {}
 
@@ -41,17 +37,9 @@ class Status extends React.Component<StatusProps, StatusState> {
 
   public componentDidMount(): void {
     if (!this.state.original) {
-      const matches = window.location.href.match(/\/status\/([a-f0-9]+)/);
+      const matches = window.location.href.match(/\/status\/([a-zA-Z0-9]+)/);
       if (matches && matches.length >= 2) {
-        const payload = fromHex(matches[1]);
-        console.log(`Got payload of ${payload.length} bytes`);
-        const signedTransaction = TransactionEncoder.fromJson(JSON.parse(Encoding.fromUtf8(payload)));
-        if (!isSignedMultisignatureSendTransaction(signedTransaction)) {
-          throw new Error(
-            "Transaction data is not an SignedTransaction<SendTransaction & MultisignatureTx & WithCreator>",
-          );
-        }
-
+        const signedTransaction = fromLinkEncoded(matches[1]);
         const { primarySignature, otherSignatures } = signedTransaction;
         this.setState({
           original: signedTransaction,

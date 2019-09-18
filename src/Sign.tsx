@@ -1,6 +1,6 @@
 import { Algorithm, FullSignature, Identity, PubkeyBytes, SendTransaction, WithCreator } from "@iov/bcp";
 import { MultisignatureTx } from "@iov/bns";
-import { Encoding, TransactionEncoder } from "@iov/encoding";
+import { TransactionEncoder } from "@iov/encoding";
 import React from "react";
 import Alert from "react-bootstrap/Alert";
 import Col from "react-bootstrap/Col";
@@ -10,9 +10,8 @@ import Row from "react-bootstrap/Row";
 import { chains } from "./settings";
 import { prettyPrintJson } from "./util/json";
 import { createSignature, getPubkeyFromLedger } from "./util/ledger";
-import { isSignedMultisignatureSendTransaction, toPrintableSignature } from "./util/signatures";
-
-const { fromHex } = Encoding;
+import { fromLinkEncoded } from "./util/links";
+import { toPrintableSignature } from "./util/signatures";
 
 interface SignProps {}
 
@@ -37,15 +36,9 @@ class Sign extends React.Component<SignProps, SignState> {
 
   public componentDidMount(): void {
     if (!this.state.transaction) {
-      const matches = window.location.href.match(/\/sign\/([a-f0-9]+)/);
+      const matches = window.location.href.match(/\/sign\/([a-zA-Z0-9]+)/);
       if (matches && matches.length >= 2) {
-        const payload = fromHex(matches[1]);
-        console.log(`Got payload of ${payload.length} bytes`);
-        const signedTransaction = TransactionEncoder.fromJson(JSON.parse(Encoding.fromUtf8(payload)));
-        if (!isSignedMultisignatureSendTransaction(signedTransaction)) {
-          throw new Error("Transaction data is not an SignedTransaction<SendTransaction>");
-        }
-
+        const signedTransaction = fromLinkEncoded(matches[1]);
         const { transaction, primarySignature, otherSignatures } = signedTransaction;
         this.setState({
           transaction: transaction,
