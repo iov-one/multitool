@@ -17,6 +17,7 @@ import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import { Redirect } from "react-router";
 
+import ConditionalError from "./ConditionalError";
 import { chains } from "./settings";
 import { amountToString } from "./util/amounts";
 import { getBalance } from "./util/connection";
@@ -216,9 +217,7 @@ class Create extends React.Component<CreateProps, CreateState> {
                 </small>
               </div>
 
-              <Alert hidden={!this.state.getPubkeyError} variant="danger">
-                {this.state.getPubkeyError}
-              </Alert>
+              <ConditionalError error={this.state.getPubkeyError} />
 
               <div className="form-group">
                 <label htmlFor="senderInput">Multisig contract ID</label>
@@ -294,10 +293,7 @@ class Create extends React.Component<CreateProps, CreateState> {
               <Alert hidden={!this.state.signing} variant="info">
                 Please sign transaction using Ledger device now
               </Alert>
-
-              <Alert hidden={!this.state.signingError} variant="danger">
-                {this.state.signingError}
-              </Alert>
+              <ConditionalError error={this.state.signingError} />
             </form>
           </Col>
           <Col className="col-6">

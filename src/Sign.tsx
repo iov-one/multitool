@@ -7,6 +7,7 @@ import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 
+import ConditionalError from "./ConditionalError";
 import { chains } from "./settings";
 import { prettyPrintJson } from "./util/json";
 import { createSignature, getPubkeyFromLedger } from "./util/ledger";
@@ -100,10 +101,7 @@ class Sign extends React.Component<SignProps, SignState> {
             <Alert hidden={!this.state.signing} variant="info">
               Please sign transaction using Ledger device now
             </Alert>
-
-            <Alert hidden={!this.state.signingError} variant="danger">
-              {this.state.signingError}
-            </Alert>
+            <ConditionalError error={this.state.signingError} />
           </Col>
         </Row>
         <Row>

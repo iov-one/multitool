@@ -2,11 +2,11 @@ import { FullSignature, SendTransaction, SignedTransaction, WithCreator } from "
 import { MultisignatureTx } from "@iov/bns";
 import { Encoding, TransactionEncoder } from "@iov/encoding";
 import React from "react";
-import Alert from "react-bootstrap/Alert";
 import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 
+import ConditionalError from "./ConditionalError";
 import SignaturesList from "./SignaturesList";
 import { postSignedTransaction } from "./util/connection";
 import { prettyPrintJson } from "./util/json";
@@ -21,7 +21,7 @@ interface StatusState {
   readonly original: SignedTransaction<SendTransaction & MultisignatureTx & WithCreator> | null;
   readonly signatures: readonly FullSignature[];
   readonly localSignature: string;
-  readonly addSignatureError: string;
+  readonly addSignatureError?: string;
   readonly posting: boolean;
   readonly postError?: string;
 }
@@ -33,7 +33,6 @@ class Status extends React.Component<StatusProps, StatusState> {
       original: null,
       signatures: [],
       localSignature: "",
-      addSignatureError: "",
       posting: false,
     };
   }
@@ -96,7 +95,7 @@ class Status extends React.Component<StatusProps, StatusState> {
                 className="btn btn-primary btn-sm"
                 onClick={event => {
                   event.preventDefault();
-                  this.setState({ addSignatureError: "" });
+                  this.setState({ addSignatureError: undefined });
 
                   const signature = prompt("Please enter signature");
                   if (signature === null) return;
@@ -123,10 +122,7 @@ class Status extends React.Component<StatusProps, StatusState> {
                 Add signature
               </button>
             </p>
-
-            <Alert hidden={!this.state.addSignatureError} variant="danger">
-              {this.state.addSignatureError}
-            </Alert>
+            <ConditionalError error={this.state.addSignatureError} />
 
             <h2>Post to blockchain</h2>
             <p>The transaction with all signatures from above will be posted to the IOV blockchain.</p>
@@ -142,10 +138,7 @@ class Status extends React.Component<StatusProps, StatusState> {
                 Post now
               </button>
             </p>
-
-            <Alert hidden={!this.state.postError} variant="danger">
-              {this.state.postError}
-            </Alert>
+            <ConditionalError error={this.state.postError} />
           </Col>
         </Row>
         <Row>
