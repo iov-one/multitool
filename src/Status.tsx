@@ -75,7 +75,7 @@ class Status extends React.Component<StatusProps, StatusState> {
               <textarea
                 className="form-control"
                 id="signingLink"
-                rows={1}
+                rows={3}
                 value={this.state.original ? makeSigningLink(this.state.original, true) : ""}
                 readOnly={true}
               ></textarea>
