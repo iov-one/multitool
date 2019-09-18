@@ -50,3 +50,16 @@ export function fromPrintableSignature(input: string): FullSignature {
 export function toPrintableSignedTransaction(signed: SignedTransaction): string {
   return JSON.stringify(TransactionEncoder.toJson(signed));
 }
+
+export function makeSignedTransaction(
+  transaction: SendTransaction & MultisignatureTx & WithCreator,
+  signatures: readonly FullSignature[],
+): SignedTransaction<SendTransaction & MultisignatureTx & WithCreator> {
+  const firstSignature = signatures.find(() => true);
+  if (!firstSignature) throw new Error("First signature missing");
+  return {
+    transaction: transaction,
+    primarySignature: firstSignature,
+    otherSignatures: signatures.slice(1),
+  };
+}

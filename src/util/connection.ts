@@ -1,5 +1,18 @@
-import { Address, Amount, ChainConnector, ChainId, Identity, Nonce } from "@iov/bcp";
-import { createBnsConnector, multisignatureIdToAddress } from "@iov/bns";
+import {
+  Address,
+  Amount,
+  ChainConnector,
+  ChainId,
+  Identity,
+  isBlockInfoFailed,
+  isBlockInfoPending,
+  Nonce,
+  SendTransaction,
+  SignedTransaction,
+  TransactionId,
+  WithCreator,
+} from "@iov/bcp";
+import { bnsCodec, createBnsConnector, multisignatureIdToAddress, MultisignatureTx } from "@iov/bns";
 import { Uint64 } from "@iov/encoding";
 
 import { chains } from "../settings";
@@ -36,4 +49,21 @@ export async function getBalance(
     address: address,
     balance: account ? account.balance : undefined,
   };
+}
+
+export async function postSignedTransaction(
+  signed: SignedTransaction<SendTransaction & MultisignatureTx & WithCreator>,
+): Promise<TransactionId> {
+  const connector = await getConnector(signed.transaction.creator.chainId);
+  const bnsConnection = await connector.establishConnection();
+
+  const response = await bnsConnection.postTx(bnsCodec.bytesToPost(signed));
+  const blockInfo = await response.blockInfo.waitFor(info => !isBlockInfoPending(info));
+  if (isBlockInfoPending(blockInfo)) throw new Error("Block info still pending. This is a bug");
+
+  if (isBlockInfoFailed(blockInfo)) {
+    throw new Error(`Error posting transaction: ${blockInfo.message}`);
+  }
+
+  return response.transactionId;
 }

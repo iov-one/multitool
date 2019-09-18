@@ -67,7 +67,7 @@ const testingState: CreateState = {
   creatorHex: "",
   chainId: "iov-boarnet",
   formMultisigContractId: "21",
-  formRecipient: "iov1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqp396zjw",
+  formRecipient: "tiov1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplsnxjl",
   formQuantity: "100.56",
   formMemo: "What a wonderful day",
   unsignedTransactionJson: null,

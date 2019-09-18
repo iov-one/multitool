@@ -8,9 +8,14 @@ import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 
 import SignaturesList from "./SignaturesList";
+import { postSignedTransaction } from "./util/connection";
 import { prettyPrintJson } from "./util/json";
 import { makeSigningLink } from "./util/links";
-import { fromPrintableSignature, isSignedMultisignatureSendTransaction } from "./util/signatures";
+import {
+  fromPrintableSignature,
+  isSignedMultisignatureSendTransaction,
+  makeSignedTransaction,
+} from "./util/signatures";
 
 const { fromHex, toHex } = Encoding;
 
@@ -134,12 +139,34 @@ class Status extends React.Component<StatusProps, StatusState> {
 
             <h2>Post to blockchain</h2>
             <p>The transaction with all signatures from above will be posted to the IOV blockchain.</p>
+            <p>
+              <button
+                className="btn btn-primary"
+                onClick={event => {
+                  event.preventDefault();
+                  this.postToChain();
+                }}
+              >
+                Post now
+              </button>
+            </p>
           </Col>
         </Row>
         <Row>
           <Col>&nbsp;</Col>
         </Row>
       </Container>
+    );
+  }
+
+  private postToChain(): void {
+    if (!this.state.original) throw new Error("Original transaction not set");
+    const signed = makeSignedTransaction(this.state.original.transaction, this.state.signatures);
+    postSignedTransaction(signed).then(
+      transactionId => {
+        console.log("Successfully posted", transactionId);
+      },
+      error => console.error(error),
     );
   }
 }
