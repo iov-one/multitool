@@ -15,9 +15,10 @@ import Alert from "react-bootstrap/Alert";
 import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
+import { Redirect } from "react-router";
 
 import { createSigned, getPubkeyFromLedger } from "./ledger";
-import { makeSigningLink, makeStatusLink } from "./links";
+import { makeStatusLink } from "./links";
 import { Decimal } from "./util/decimal";
 import { prettyPrintJson } from "./util/json";
 
@@ -32,6 +33,7 @@ interface CreateState {
   readonly formMemo: string;
   readonly unsignedTransactionJson: string | null;
   readonly encodingError: string | null;
+  readonly statusUrl?: string;
 }
 
 type FormField = "chainId" | "multisigContractId" | "recipient" | "quantity" | "memo";
@@ -131,6 +133,7 @@ class Create extends React.Component<CreateProps, CreateState> {
   public render(): JSX.Element {
     return (
       <Container>
+        {this.state.statusUrl && <Redirect to={this.state.statusUrl} push />}
         <Row>
           <Col className="col-6">
             <h3>Enter transaction</h3>
@@ -316,9 +319,9 @@ class Create extends React.Component<CreateProps, CreateState> {
     if (!this.state.unsignedTransactionJson) throw new Error("unsigned transaction not set");
     createSigned(this.state.unsignedTransactionJson).then(
       signed => {
-        const signingUrl = makeSigningLink(signed);
         const statusUrl = makeStatusLink(signed);
-        console.log("Navigate to", signingUrl, statusUrl);
+        console.log("Navigating to", statusUrl);
+        this.setState({ statusUrl: statusUrl });
       },
       error => console.error(error),
     );
