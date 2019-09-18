@@ -8,6 +8,7 @@ import Row from "react-bootstrap/Row";
 
 import { createSignature, getPubkeyFromLedger } from "./ledger";
 import { isSignedMultisignatureSendTransaction, toPrintableSignature } from "./signatures";
+import { prettyPrintJson } from "./util/json";
 
 const { fromHex } = Encoding;
 
@@ -57,7 +58,7 @@ class Sign extends React.Component<SignProps, SignState> {
         <Row>
           <Col className="col-6">
             <h2>Review transaction</h2>
-            <pre>{JSON.stringify(TransactionEncoder.toJson(this.state.transaction), null, 2)}</pre>
+            <pre>{prettyPrintJson(TransactionEncoder.toJson(this.state.transaction))}</pre>
           </Col>
           <Col className="col-6">
             <h2>Create Signature</h2>

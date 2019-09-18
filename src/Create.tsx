@@ -19,6 +19,7 @@ import Row from "react-bootstrap/Row";
 import { createSigned, getPubkeyFromLedger } from "./ledger";
 import { makeSigningLink, makeStatusLink } from "./links";
 import { Decimal } from "./util/decimal";
+import { prettyPrintJson } from "./util/json";
 
 interface CreateProps {}
 
@@ -257,7 +258,7 @@ class Create extends React.Component<CreateProps, CreateState> {
             {this.state.unsignedTransactionJson && (
               <div>
                 <p>This is a machine processable representation of the transaction.</p>
-                <pre>{JSON.stringify(JSON.parse(this.state.unsignedTransactionJson), null, 2)}</pre>
+                <pre>{prettyPrintJson(this.state.unsignedTransactionJson)}</pre>
               </div>
             )}
             <Alert variant="danger" hidden={!this.state.encodingError}>

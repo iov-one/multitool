@@ -13,6 +13,7 @@ import {
   isSignedMultisignatureSendTransaction,
   toPrintableSignature,
 } from "./signatures";
+import { prettyPrintJson } from "./util/json";
 
 const { fromHex, toHex } = Encoding;
 
@@ -84,7 +85,7 @@ class Status extends React.Component<StatusProps, StatusState> {
             <h2>Review transaction</h2>
             <pre>
               {this.state.original
-                ? JSON.stringify(TransactionEncoder.toJson(this.state.original.transaction), null, 2)
+                ? prettyPrintJson(TransactionEncoder.toJson(this.state.original.transaction))
                 : ""}
             </pre>
           </Col>
