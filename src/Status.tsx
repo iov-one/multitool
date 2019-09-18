@@ -37,7 +37,7 @@ class Status extends React.Component<StatusProps, StatusState> {
 
   public componentDidMount(): void {
     if (!this.state.original) {
-      const matches = window.location.href.match(/\/status\/([a-zA-Z0-9]+)/);
+      const matches = window.location.href.match(/\/status\/([-_=a-zA-Z0-9]+)/);
       if (matches && matches.length >= 2) {
         const signedTransaction = fromLinkEncoded(matches[1]);
         const { primarySignature, otherSignatures } = signedTransaction;

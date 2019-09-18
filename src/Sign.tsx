@@ -36,7 +36,7 @@ class Sign extends React.Component<SignProps, SignState> {
 
   public componentDidMount(): void {
     if (!this.state.transaction) {
-      const matches = window.location.href.match(/\/sign\/([a-zA-Z0-9]+)/);
+      const matches = window.location.href.match(/\/sign\/([-_=a-zA-Z0-9]+)/);
       if (matches && matches.length >= 2) {
         const signedTransaction = fromLinkEncoded(matches[1]);
         const { transaction, primarySignature, otherSignatures } = signedTransaction;

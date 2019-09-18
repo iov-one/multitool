@@ -2,20 +2,23 @@ import { SendTransaction, SignedTransaction, WithCreator } from "@iov/bcp";
 import { MultisignatureTx } from "@iov/bns";
 import { Encoding, TransactionEncoder } from "@iov/encoding";
 
+import { base64urlDecode, base64urlEncode } from "./base64url";
 import { isSignedMultisignatureSendTransaction, toPrintableSignedTransaction } from "./signatures";
 
-const { fromHex, fromUtf8, toHex, toUtf8 } = Encoding;
+const { fromUtf8, toUtf8 } = Encoding;
 
 function toLinkEncoded(
   transaction: SignedTransaction<SendTransaction & MultisignatureTx & WithCreator>,
 ): string {
-  return toHex(toUtf8(toPrintableSignedTransaction(transaction)));
+  const data = toUtf8(toPrintableSignedTransaction(transaction));
+  return base64urlEncode(data);
 }
 
 export function fromLinkEncoded(
   encoded: string,
 ): SignedTransaction<SendTransaction & MultisignatureTx & WithCreator> {
-  const signedTransaction = TransactionEncoder.fromJson(JSON.parse(fromUtf8(fromHex(encoded))));
+  const data = base64urlDecode(encoded);
+  const signedTransaction = TransactionEncoder.fromJson(JSON.parse(fromUtf8(data)));
   if (!isSignedMultisignatureSendTransaction(signedTransaction)) {
     throw new Error(
       "Transaction data is not an SignedTransaction<SendTransaction & MultisignatureTx & WithCreator>",
