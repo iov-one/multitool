@@ -1,7 +1,8 @@
-import { FullSignature, SendTransaction, SignedTransaction, WithCreator } from "@iov/bcp";
+import { FullSignature, SendTransaction, SignedTransaction, TransactionId, WithCreator } from "@iov/bcp";
 import { MultisignatureTx } from "@iov/bns";
 import { Encoding, TransactionEncoder } from "@iov/encoding";
 import React from "react";
+import Alert from "react-bootstrap/Alert";
 import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
@@ -24,6 +25,7 @@ interface StatusState {
   readonly addSignatureError?: string;
   readonly posting: boolean;
   readonly postError?: string;
+  readonly postSuccess?: TransactionId;
 }
 
 class Status extends React.Component<StatusProps, StatusState> {
@@ -125,19 +127,24 @@ class Status extends React.Component<StatusProps, StatusState> {
             <ConditionalError error={this.state.addSignatureError} />
 
             <h2>Post to blockchain</h2>
-            <p>The transaction with all signatures from above will be posted to the IOV blockchain.</p>
-            <p>
-              <button
-                className="btn btn-primary"
-                disabled={this.state.posting}
-                onClick={event => {
-                  event.preventDefault();
-                  this.postToChain();
-                }}
-              >
-                Post now
-              </button>
-            </p>
+            <div hidden={!!this.state.postSuccess}>
+              <p>The transaction with all signatures from above will be posted to the IOV blockchain.</p>
+              <p>
+                <button
+                  className="btn btn-primary"
+                  disabled={this.state.posting}
+                  onClick={event => {
+                    event.preventDefault();
+                    this.postToChain();
+                  }}
+                >
+                  Post now
+                </button>
+              </p>
+            </div>
+            <Alert variant="success" hidden={!this.state.postSuccess}>
+              <p>Sucessfully posted transaction with ID {this.state.postSuccess} to the blockchain.</p>
+            </Alert>
             <ConditionalError error={this.state.postError} />
           </Col>
         </Row>
@@ -162,6 +169,7 @@ class Status extends React.Component<StatusProps, StatusState> {
         this.setState({
           posting: false,
           postError: undefined,
+          postSuccess: transactionId,
         });
       },
       error => {
