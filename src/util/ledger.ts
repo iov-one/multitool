@@ -56,7 +56,7 @@ export async function createSignature(
   transaction: UnsignedTransaction,
   signer: Identity,
 ): Promise<FullSignature> {
-  const nonce = await getNonce(signer);
+  const nonce = await getNonce(signer.chainId, signer.pubkey);
   const { bytes } = bnsCodec.bytesToSign(transaction, nonce);
   const requiredNetworkType = signer.chainId === "iov-mainnet" ? "mainnet" : "testnet";
 

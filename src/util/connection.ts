@@ -3,10 +3,10 @@ import {
   Amount,
   ChainConnector,
   ChainId,
-  Identity,
   isBlockInfoFailed,
   isBlockInfoPending,
   Nonce,
+  PubkeyBundle,
   SendTransaction,
   SignedTransaction,
   TransactionId,
@@ -25,10 +25,10 @@ export async function getConnector(chainId: ChainId): Promise<ChainConnector> {
   return bnsConnector;
 }
 
-export async function getNonce(identity: Identity): Promise<Nonce> {
-  const connector = await getConnector(identity.chainId);
+export async function getNonce(chainId: ChainId, pubkey: PubkeyBundle): Promise<Nonce> {
+  const connector = await getConnector(chainId);
   const bnsConnection = await connector.establishConnection();
-  const nonce = await bnsConnection.getNonce({ pubkey: identity.pubkey });
+  const nonce = await bnsConnection.getNonce({ pubkey: pubkey });
   bnsConnection.disconnect();
   return nonce;
 }
