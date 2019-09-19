@@ -1,6 +1,5 @@
 import { Algorithm, FullSignature, Identity, PubkeyBytes, SendTransaction, WithCreator } from "@iov/bcp";
 import { MultisignatureTx } from "@iov/bns";
-import { TransactionEncoder } from "@iov/encoding";
 import React from "react";
 import Alert from "react-bootstrap/Alert";
 import Col from "react-bootstrap/Col";
@@ -9,7 +8,7 @@ import Row from "react-bootstrap/Row";
 
 import ConditionalError from "./ConditionalError";
 import { chains } from "./settings";
-import { prettyPrintJson } from "./util/json";
+import Transaction from "./Transaction";
 import { createSignature, getPubkeyFromLedger } from "./util/ledger";
 import { fromLinkEncoded } from "./util/links";
 import { toPrintableSignature } from "./util/signatures";
@@ -55,7 +54,7 @@ class Sign extends React.Component<SignProps, SignState> {
         <Row>
           <Col className="col-6">
             <h2>Review transaction</h2>
-            <pre>{prettyPrintJson(TransactionEncoder.toJson(this.state.transaction))}</pre>
+            {this.state.transaction && <Transaction transaction={this.state.transaction} />}
           </Col>
           <Col className="col-6">
             <h2>Create Signature</h2>

@@ -6,10 +6,12 @@ import {
   Nonce,
   PubkeyBytes,
   SendTransaction,
+  UnsignedTransaction,
   WithCreator,
 } from "@iov/bcp";
 import { bnsCodec, multisignatureIdToAddress, MultisignatureTx } from "@iov/bns";
-import { Encoding, TransactionEncoder, Uint64 } from "@iov/encoding";
+import { Encoding, Uint64 } from "@iov/encoding";
+import equal from "fast-deep-equal";
 import React from "react";
 import Alert from "react-bootstrap/Alert";
 import Col from "react-bootstrap/Col";
@@ -19,10 +21,10 @@ import { Redirect } from "react-router";
 
 import ConditionalError from "./ConditionalError";
 import { chains } from "./settings";
+import Transaction from "./Transaction";
 import { amountToString } from "./util/amounts";
 import { getBalance } from "./util/connection";
 import { Decimal } from "./util/decimal";
-import { prettyPrintJson } from "./util/json";
 import { createSigned, getPubkeyFromLedger } from "./util/ledger";
 import { makeStatusLink } from "./util/links";
 
@@ -35,7 +37,7 @@ interface CreateState {
   readonly formRecipient: string;
   readonly formQuantity: string;
   readonly formMemo: string;
-  readonly unsignedTransactionJson: string | null;
+  readonly unsignedTransaction?: UnsignedTransaction & SendTransaction & MultisignatureTx;
   readonly encodingError: string | null;
   readonly getPubkeyError?: string;
   readonly signingError?: string;
@@ -58,7 +60,6 @@ const emptyState: CreateState = {
   formRecipient: "",
   formQuantity: "",
   formMemo: "",
-  unsignedTransactionJson: null,
   encodingError: null,
   signing: false,
 };
@@ -71,7 +72,6 @@ const testingState: CreateState = {
   formRecipient: "tiov1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplsnxjl",
   formQuantity: "100.56",
   formMemo: "What a wonderful day",
-  unsignedTransactionJson: null,
   encodingError: null,
   signing: false,
 };
@@ -143,10 +143,9 @@ class Create extends React.Component<CreateProps, CreateState> {
       // test serialization for input validation
       bnsCodec.bytesToSign(tx, 0 as Nonce);
 
-      const unsignedTransactionJson = JSON.stringify(TransactionEncoder.toJson(tx));
-      if (this.state.unsignedTransactionJson !== unsignedTransactionJson) {
+      if (!equal(this.state.unsignedTransaction, tx)) {
         this.setState({
-          unsignedTransactionJson: unsignedTransactionJson,
+          unsignedTransaction: tx,
           encodingError: null,
         });
       }
@@ -156,7 +155,7 @@ class Create extends React.Component<CreateProps, CreateState> {
 
     if (this.state.encodingError !== encodingError) {
       this.setState({
-        unsignedTransactionJson: null,
+        unsignedTransaction: undefined,
         encodingError: encodingError,
       });
     }
@@ -280,7 +279,7 @@ class Create extends React.Component<CreateProps, CreateState> {
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  disabled={this.state.signing || !this.state.unsignedTransactionJson}
+                  disabled={this.state.signing || !this.state.unsignedTransaction}
                   onClick={event => {
                     event.preventDefault();
                     this.signAndContinue();
@@ -310,10 +309,10 @@ class Create extends React.Component<CreateProps, CreateState> {
             )}
 
             <h3>Details</h3>
-            {this.state.unsignedTransactionJson && (
+            {this.state.unsignedTransaction && (
               <div>
                 <p>This is a machine processable representation of the transaction.</p>
-                <pre>{prettyPrintJson(this.state.unsignedTransactionJson)}</pre>
+                <Transaction transaction={this.state.unsignedTransaction} />
               </div>
             )}
             <Alert variant="danger" hidden={!this.state.encodingError}>
@@ -391,8 +390,8 @@ class Create extends React.Component<CreateProps, CreateState> {
       signing: true,
     });
 
-    if (!this.state.unsignedTransactionJson) throw new Error("unsigned transaction not set");
-    createSigned(this.state.unsignedTransactionJson).then(
+    if (!this.state.unsignedTransaction) throw new Error("unsigned transaction not set");
+    createSigned(this.state.unsignedTransaction).then(
       signed => {
         const statusUrl = makeStatusLink(signed);
         console.log("Navigating to", statusUrl);

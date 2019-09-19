@@ -1,6 +1,6 @@
 import { FullSignature, SendTransaction, SignedTransaction, TransactionId, WithCreator } from "@iov/bcp";
 import { MultisignatureTx } from "@iov/bns";
-import { Encoding, TransactionEncoder } from "@iov/encoding";
+import { Encoding } from "@iov/encoding";
 import React from "react";
 import Alert from "react-bootstrap/Alert";
 import Col from "react-bootstrap/Col";
@@ -9,8 +9,8 @@ import Row from "react-bootstrap/Row";
 
 import ConditionalError from "./ConditionalError";
 import SignaturesList from "./SignaturesList";
+import Transaction from "./Transaction";
 import { postSignedTransaction } from "./util/connection";
-import { prettyPrintJson } from "./util/json";
 import { fromLinkEncoded, makeSigningLink } from "./util/links";
 import { fromPrintableSignature, makeSignedTransaction } from "./util/signatures";
 
@@ -77,11 +77,7 @@ class Status extends React.Component<StatusProps, StatusState> {
         <Row>
           <Col className="col-6">
             <h2>Review transaction</h2>
-            <pre>
-              {this.state.original
-                ? prettyPrintJson(TransactionEncoder.toJson(this.state.original.transaction))
-                : ""}
-            </pre>
+            {this.state.original && <Transaction transaction={this.state.original.transaction} />}
           </Col>
           <Col className="col-6">
             <h2>Signatures ({this.state.signatures.length})</h2>

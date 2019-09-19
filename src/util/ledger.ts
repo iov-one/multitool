@@ -1,8 +1,6 @@
 import {
   FullSignature,
   Identity,
-  isSendTransaction,
-  isUnsignedTransaction,
   PubkeyBytes,
   SendTransaction,
   SignatureBytes,
@@ -10,8 +8,7 @@ import {
   UnsignedTransaction,
   WithCreator,
 } from "@iov/bcp";
-import { bnsCodec, isMultisignatureTx, MultisignatureTx } from "@iov/bns";
-import { TransactionEncoder } from "@iov/encoding";
+import { bnsCodec, MultisignatureTx } from "@iov/bns";
 import {
   IovLedgerApp,
   isIovLedgerAppAddress,
@@ -90,24 +87,12 @@ export async function createSignature(
 }
 
 export async function createSigned(
-  unsigned: string,
+  unsigned: UnsignedTransaction & SendTransaction & MultisignatureTx,
 ): Promise<SignedTransaction<SendTransaction & MultisignatureTx & WithCreator>> {
-  const transaction = TransactionEncoder.fromJson(JSON.parse(unsigned));
-  if (
-    !isUnsignedTransaction(transaction) ||
-    !isSendTransaction(transaction) ||
-    !isMultisignatureTx(transaction)
-  ) {
-    throw new Error("Invalid transaction format in RPC request to Ledger endpoint.");
-  }
-
-  const signature = await createSignature(transaction, transaction.creator);
-
-  const signedTransaction: SignedTransaction<SendTransaction & MultisignatureTx & WithCreator> = {
-    transaction: transaction,
+  const signature = await createSignature(unsigned, unsigned.creator);
+  return {
+    transaction: unsigned,
     primarySignature: signature,
     otherSignatures: [],
   };
-
-  return signedTransaction;
 }
