@@ -10,7 +10,7 @@ import {
   WithCreator,
 } from "@iov/bcp";
 import { bnsCodec, multisignatureIdToAddress, MultisignatureTx } from "@iov/bns";
-import { Encoding, Uint64 } from "@iov/encoding";
+import { Decimal, Encoding, Uint64 } from "@iov/encoding";
 import equal from "fast-deep-equal";
 import React from "react";
 import Alert from "react-bootstrap/Alert";
@@ -24,7 +24,6 @@ import { chains } from "./settings";
 import Transaction from "./Transaction";
 import { amountToString } from "./util/amounts";
 import { getBalance } from "./util/connection";
-import { Decimal } from "./util/decimal";
 import { createSigned, getPubkeyFromLedger } from "./util/ledger";
 import { makeStatusLink } from "./util/links";
 

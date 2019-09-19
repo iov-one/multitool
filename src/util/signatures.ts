@@ -1,6 +1,6 @@
 import {
   FullSignature,
-  isPubkeyBundle,
+  isFullSignature,
   isSendTransaction,
   isUnsignedTransaction,
   SendTransaction,
@@ -8,18 +8,7 @@ import {
   WithCreator,
 } from "@iov/bcp";
 import { isMultisignatureTx, MultisignatureTx } from "@iov/bns";
-import { isNonNullObject, isUint8Array, TransactionEncoder } from "@iov/encoding";
-
-export function isFullSignature(data: unknown): data is FullSignature {
-  if (!isNonNullObject(data)) return false;
-
-  const { nonce, pubkey, signature } = data as FullSignature;
-  if (typeof nonce !== "number") return false;
-  if (!isPubkeyBundle(pubkey)) return false;
-  if (!isUint8Array(signature)) return false;
-
-  return true;
-}
+import { isNonNullObject, TransactionEncoder } from "@iov/encoding";
 
 export function isSignedMultisignatureSendTransaction(
   data: unknown,
