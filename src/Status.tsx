@@ -1,4 +1,4 @@
-import { FullSignature, SendTransaction, SignedTransaction, TransactionId, WithCreator } from "@iov/bcp";
+import { FullSignature, SendTransaction, TransactionId, WithCreator } from "@iov/bcp";
 import { MultisignatureTx } from "@iov/bns";
 import React from "react";
 import Alert from "react-bootstrap/Alert";
@@ -12,13 +12,13 @@ import Transaction from "./Transaction";
 import { arrayEquals } from "./util/arrays";
 import { postSignedTransaction } from "./util/connection";
 import { getErrorMessage } from "./util/errors";
-import { fromLinkEncoded, makeSigningLink } from "./util/links";
+import { makeSigningLink, signedFromLinkEncoded } from "./util/links";
 import { fromPrintableSignature, makeSignedTransaction, verifySignature } from "./util/signatures";
 
 interface StatusProps {}
 
 interface StatusState {
-  readonly original: SignedTransaction<SendTransaction & MultisignatureTx & WithCreator> | null;
+  readonly transaction: (SendTransaction & MultisignatureTx & WithCreator) | null;
   readonly signatures: readonly FullSignature[];
   readonly localSignature: string;
   readonly addSignatureError?: string;
@@ -32,7 +32,7 @@ class Status extends React.Component<StatusProps, StatusState> {
   public constructor(props: StatusProps) {
     super(props);
     this.state = {
-      original: null,
+      transaction: null,
       signatures: [],
       localSignature: "",
       posting: false,
@@ -40,14 +40,14 @@ class Status extends React.Component<StatusProps, StatusState> {
   }
 
   public componentDidMount(): void {
-    if (!this.state.original) {
+    if (!this.state.transaction) {
       const matches = window.location.href.match(/\/status\/([-_=a-zA-Z0-9]+)/);
       if (matches && matches.length >= 2) {
         try {
-          const signedTransaction = fromLinkEncoded(matches[1]);
-          const { primarySignature, otherSignatures } = signedTransaction;
+          const signedTransaction = signedFromLinkEncoded(matches[1]);
+          const { transaction, primarySignature, otherSignatures } = signedTransaction;
           this.setState({
-            original: signedTransaction,
+            transaction: transaction,
             signatures: [primarySignature, ...otherSignatures],
           });
         } catch (error) {
@@ -79,7 +79,7 @@ class Status extends React.Component<StatusProps, StatusState> {
               <input
                 className="form-control"
                 id="signingLink"
-                value={this.state.original ? makeSigningLink(this.state.original, true) : ""}
+                value={this.state.transaction ? makeSigningLink(this.state.transaction, true) : ""}
                 readOnly={true}
               />
             </div>
@@ -88,13 +88,13 @@ class Status extends React.Component<StatusProps, StatusState> {
         <Row>
           <Col className="col-6">
             <h2>Review transaction</h2>
-            {this.state.original && <Transaction transaction={this.state.original.transaction} />}
+            {this.state.transaction && <Transaction transaction={this.state.transaction} />}
           </Col>
           <Col className="col-6">
             <h2>Signatures</h2>
-            {this.state.original && (
+            {this.state.transaction && (
               <SignaturesList
-                chainId={this.state.original.transaction.creator.chainId}
+                chainId={this.state.transaction.creator.chainId}
                 signatures={this.state.signatures}
               />
             )}
@@ -106,7 +106,7 @@ class Status extends React.Component<StatusProps, StatusState> {
                   event.preventDefault();
                   this.setState({ addSignatureError: undefined });
 
-                  if (!this.state.original) throw new Error("Original transaction not set");
+                  if (!this.state.transaction) throw new Error("Original transaction not set");
 
                   const signatureInput = prompt("Please enter signature");
                   if (signatureInput === null) return;
@@ -115,7 +115,7 @@ class Status extends React.Component<StatusProps, StatusState> {
                     console.log(signatureInput);
                     const newSignature = fromPrintableSignature(signatureInput);
 
-                    if (!(await verifySignature(this.state.original.transaction, newSignature))) {
+                    if (!(await verifySignature(this.state.transaction, newSignature))) {
                       throw new Error("Signature is not valid for this transaction");
                     }
 
@@ -168,8 +168,8 @@ class Status extends React.Component<StatusProps, StatusState> {
   }
 
   private postToChain(): void {
-    if (!this.state.original) throw new Error("Original transaction not set");
-    const signed = makeSignedTransaction(this.state.original.transaction, this.state.signatures);
+    if (!this.state.transaction) throw new Error("Original transaction not set");
+    const signed = makeSignedTransaction(this.state.transaction, this.state.signatures);
 
     this.setState({
       posting: true,

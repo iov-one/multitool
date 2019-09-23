@@ -6,11 +6,25 @@ import {
   PrehashType,
   SendTransaction,
   SignedTransaction,
+  UnsignedTransaction,
   WithCreator,
 } from "@iov/bcp";
 import { bnsCodec, isMultisignatureTx, MultisignatureTx } from "@iov/bns";
 import { Ed25519, Sha512 } from "@iov/crypto";
 import { isNonNullObject, TransactionEncoder } from "@iov/encoding";
+
+export function isUnsignedMultisignatureSendTransaction(
+  data: unknown,
+): data is SendTransaction & MultisignatureTx & WithCreator {
+  if (!isNonNullObject(data)) return false;
+
+  const transaction = data as SignedTransaction;
+  if (!isUnsignedTransaction(transaction)) return false;
+  if (!isSendTransaction(transaction)) return false;
+  if (!isMultisignatureTx(transaction)) return false;
+
+  return true;
+}
 
 export function isSignedMultisignatureSendTransaction(
   data: unknown,
@@ -19,9 +33,7 @@ export function isSignedMultisignatureSendTransaction(
 
   const { transaction, primarySignature, otherSignatures } = data as SignedTransaction;
 
-  if (!isUnsignedTransaction(transaction)) return false;
-  if (!isSendTransaction(transaction)) return false;
-  if (!isMultisignatureTx(transaction)) return false;
+  if (!isUnsignedMultisignatureSendTransaction(transaction)) return false;
   if (!isFullSignature(primarySignature)) return false;
   if (!Array.isArray(otherSignatures) || otherSignatures.some(sig => !isFullSignature(sig))) return false;
 
@@ -38,8 +50,8 @@ export function fromPrintableSignature(input: string): FullSignature {
   return fullSignature;
 }
 
-export function toPrintableSignedTransaction(signed: SignedTransaction): string {
-  return JSON.stringify(TransactionEncoder.toJson(signed));
+export function toPrintableSignedTransaction(transaction: SignedTransaction | UnsignedTransaction): string {
+  return JSON.stringify(TransactionEncoder.toJson(transaction));
 }
 
 export function makeSignedTransaction(

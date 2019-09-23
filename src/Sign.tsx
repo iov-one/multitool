@@ -1,4 +1,4 @@
-import { Algorithm, FullSignature, Identity, PubkeyBytes, SendTransaction, WithCreator } from "@iov/bcp";
+import { Algorithm, Identity, PubkeyBytes, SendTransaction, WithCreator } from "@iov/bcp";
 import { MultisignatureTx } from "@iov/bns";
 import React from "react";
 import Alert from "react-bootstrap/Alert";
@@ -11,14 +11,13 @@ import { chains } from "./settings";
 import Transaction from "./Transaction";
 import { getErrorMessage } from "./util/errors";
 import { createSignature, getPubkeyFromLedger } from "./util/ledger";
-import { fromLinkEncoded } from "./util/links";
+import { unsignedFromLinkEncoded } from "./util/links";
 import { toPrintableSignature } from "./util/signatures";
 
 interface SignProps {}
 
 interface SignState {
   readonly transaction: (SendTransaction & MultisignatureTx & WithCreator) | null;
-  readonly signatures: readonly FullSignature[];
   readonly localSignature: string;
   readonly signingError?: string;
   readonly globalError?: string;
@@ -30,7 +29,6 @@ class Sign extends React.Component<SignProps, SignState> {
     super(props);
     this.state = {
       transaction: null,
-      signatures: [],
       localSignature: "",
       signing: false,
     };
@@ -41,12 +39,8 @@ class Sign extends React.Component<SignProps, SignState> {
       const matches = window.location.href.match(/\/sign\/([-_=a-zA-Z0-9]+)/);
       if (matches && matches.length >= 2) {
         try {
-          const signedTransaction = fromLinkEncoded(matches[1]);
-          const { transaction, primarySignature, otherSignatures } = signedTransaction;
-          this.setState({
-            transaction: transaction,
-            signatures: [primarySignature, ...otherSignatures],
-          });
+          const unsigned = unsignedFromLinkEncoded(matches[1]);
+          this.setState({ transaction: unsigned });
         } catch (error) {
           console.warn("Full error message", error);
           this.setState({ globalError: "Error in URL: " + getErrorMessage(error) });
