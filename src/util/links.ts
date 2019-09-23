@@ -3,6 +3,7 @@ import { MultisignatureTx } from "@iov/bns";
 import { Encoding, TransactionEncoder } from "@iov/encoding";
 
 import { base64urlDecode, base64urlEncode } from "./base64url";
+import { decodeChecksummed, encodeChecksummed } from "./checksummed";
 import { isSignedMultisignatureSendTransaction, toPrintableSignedTransaction } from "./signatures";
 
 const { fromUtf8, toUtf8 } = Encoding;
@@ -11,13 +12,13 @@ function toLinkEncoded(
   transaction: SignedTransaction<SendTransaction & MultisignatureTx & WithCreator>,
 ): string {
   const data = toUtf8(toPrintableSignedTransaction(transaction));
-  return base64urlEncode(data);
+  return encodeChecksummed(data, base64urlEncode);
 }
 
 export function fromLinkEncoded(
   encoded: string,
 ): SignedTransaction<SendTransaction & MultisignatureTx & WithCreator> {
-  const data = base64urlDecode(encoded);
+  const data = decodeChecksummed(encoded, base64urlDecode);
   const signedTransaction = TransactionEncoder.fromJson(JSON.parse(fromUtf8(data)));
   if (!isSignedMultisignatureSendTransaction(signedTransaction)) {
     throw new Error(

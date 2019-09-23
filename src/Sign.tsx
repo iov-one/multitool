@@ -21,6 +21,7 @@ interface SignState {
   readonly signatures: readonly FullSignature[];
   readonly localSignature: string;
   readonly signingError?: string;
+  readonly globalError?: string;
   readonly signing: boolean;
 }
 
@@ -39,12 +40,19 @@ class Sign extends React.Component<SignProps, SignState> {
     if (!this.state.transaction) {
       const matches = window.location.href.match(/\/sign\/([-_=a-zA-Z0-9]+)/);
       if (matches && matches.length >= 2) {
-        const signedTransaction = fromLinkEncoded(matches[1]);
-        const { transaction, primarySignature, otherSignatures } = signedTransaction;
-        this.setState({
-          transaction: transaction,
-          signatures: [primarySignature, ...otherSignatures],
-        });
+        try {
+          const signedTransaction = fromLinkEncoded(matches[1]);
+          const { transaction, primarySignature, otherSignatures } = signedTransaction;
+          this.setState({
+            transaction: transaction,
+            signatures: [primarySignature, ...otherSignatures],
+          });
+        } catch (error) {
+          console.warn("Full error message", error);
+          this.setState({ globalError: "Error in URL: " + getErrorMessage(error) });
+        }
+      } else {
+        this.setState({ globalError: "Error in URL: Transaction missing" });
       }
     }
   }
@@ -52,6 +60,11 @@ class Sign extends React.Component<SignProps, SignState> {
   public render(): JSX.Element {
     return (
       <Container>
+        <Row>
+          <Col>
+            <ConditionalError error={this.state.globalError} />
+          </Col>
+        </Row>
         <Row>
           <Col className="col-6">
             <h2>Review transaction</h2>

@@ -27,6 +27,7 @@ interface StatusState {
   readonly posting: boolean;
   readonly postError?: string;
   readonly postSuccess?: TransactionId;
+  readonly globalError?: string;
 }
 
 class Status extends React.Component<StatusProps, StatusState> {
@@ -44,12 +45,19 @@ class Status extends React.Component<StatusProps, StatusState> {
     if (!this.state.original) {
       const matches = window.location.href.match(/\/status\/([-_=a-zA-Z0-9]+)/);
       if (matches && matches.length >= 2) {
-        const signedTransaction = fromLinkEncoded(matches[1]);
-        const { primarySignature, otherSignatures } = signedTransaction;
-        this.setState({
-          original: signedTransaction,
-          signatures: [primarySignature, ...otherSignatures],
-        });
+        try {
+          const signedTransaction = fromLinkEncoded(matches[1]);
+          const { primarySignature, otherSignatures } = signedTransaction;
+          this.setState({
+            original: signedTransaction,
+            signatures: [primarySignature, ...otherSignatures],
+          });
+        } catch (error) {
+          console.warn("Full error message", error);
+          this.setState({ globalError: "Error in URL: " + getErrorMessage(error) });
+        }
+      } else {
+        this.setState({ globalError: "Error in URL: Transaction missing" });
       }
     }
   }
@@ -57,6 +65,11 @@ class Status extends React.Component<StatusProps, StatusState> {
   public render(): JSX.Element {
     return (
       <Container>
+        <Row>
+          <Col>
+            <ConditionalError error={this.state.globalError} />
+          </Col>
+        </Row>
         <Row>
           <Col>
             <h2>Signing link</h2>
