@@ -94,7 +94,7 @@ class Status extends React.Component<StatusProps, StatusState> {
             {this.state.original && <Transaction transaction={this.state.original.transaction} />}
           </Col>
           <Col className="col-6">
-            <h2>Signatures ({this.state.signatures.length})</h2>
+            <h2>Signatures</h2>
             {this.state.original && (
               <SignaturesList
                 chainId={this.state.original.transaction.creator.chainId}

@@ -6,8 +6,41 @@ import Alert from "react-bootstrap/Alert";
 
 import { getNonce } from "./util/connection";
 import { toPrintableSignature } from "./util/signatures";
+import { ellideMiddle } from "./util/text";
 
 const { toHex } = Encoding;
+
+interface NonceStatus {
+  readonly error?: {
+    readonly received: number;
+    readonly expected: number;
+  };
+}
+
+interface SignatureProps {
+  readonly index: number;
+  readonly chainId: ChainId;
+  readonly signature: FullSignature;
+  readonly noneStatus: NonceStatus;
+}
+
+const Signature = ({ index, chainId, signature, noneStatus }: SignatureProps): JSX.Element => {
+  const address = bnsCodec.identityToAddress({ chainId: chainId, pubkey: signature.pubkey });
+  return (
+    <li className="list-group-item last-child-no-bottom-margin" key={toHex(signature.pubkey.data)}>
+      <h5>
+        {`#${index + 1}`} {ellideMiddle(address, 22)}
+      </h5>
+      <p className="text-muted text-break">{toPrintableSignature(signature)}</p>
+      {noneStatus.error && (
+        <Alert variant="warning">
+          Nonce outdated. In signature: {noneStatus.error.received}; Expected by chain:{" "}
+          {noneStatus.error.expected}
+        </Alert>
+      )}
+    </li>
+  );
+};
 
 interface SignaturesListPros {
   readonly chainId: ChainId;
@@ -15,7 +48,7 @@ interface SignaturesListPros {
 }
 
 interface SignaturesListState {
-  readonly nonceStatuses: readonly boolean[];
+  readonly nonceStatuses: readonly NonceStatus[];
 }
 
 class SignaturesList extends React.Component<SignaturesListPros, SignaturesListState> {
@@ -24,18 +57,28 @@ class SignaturesList extends React.Component<SignaturesListPros, SignaturesListS
   public constructor(props: SignaturesListPros) {
     super(props);
     this.state = {
-      nonceStatuses: [],
+      nonceStatuses: props.signatures.map((_): NonceStatus => ({})),
     };
   }
 
   public componentDidMount(): void {
     this.interval = setInterval(async () => {
       const statuses = await Promise.all(
-        this.props.signatures.map(async signature => {
-          const latestNonce = await getNonce(this.props.chainId, signature.pubkey);
-          const outdated = signature.nonce !== latestNonce;
-          return outdated;
-        }),
+        this.props.signatures.map(
+          async (signature): Promise<NonceStatus> => {
+            const latestNonce = await getNonce(this.props.chainId, signature.pubkey);
+            if (signature.nonce === latestNonce) {
+              return {};
+            } else {
+              return {
+                error: {
+                  expected: latestNonce,
+                  received: signature.nonce,
+                },
+              };
+            }
+          },
+        ),
       );
       this.setState({ nonceStatuses: statuses });
     }, 5000);
@@ -50,14 +93,12 @@ class SignaturesList extends React.Component<SignaturesListPros, SignaturesListS
     return (
       <ol className="list-group mb-3">
         {this.props.signatures.map((signature, index) => (
-          <li className="list-group-item" key={toHex(signature.pubkey.data)}>
-            {bnsCodec.identityToAddress({
-              chainId: this.props.chainId,
-              pubkey: signature.pubkey,
-            })}
-            : <code>{toPrintableSignature(signature)}</code>
-            {this.state.nonceStatuses[index] && <Alert variant="danger">Nonce is outdated</Alert>}
-          </li>
+          <Signature
+            index={index}
+            chainId={this.props.chainId}
+            signature={signature}
+            noneStatus={this.state.nonceStatuses[index]}
+          />
         ))}
       </ol>
     );

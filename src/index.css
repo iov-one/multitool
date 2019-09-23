@@ -2,3 +2,7 @@ p a {
   color: inherit;
   text-decoration: underline;
 }
+
+.last-child-no-bottom-margin > :last-child {
+  margin-bottom: 0;
+}
