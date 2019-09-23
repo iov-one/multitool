@@ -1,0 +1,1 @@
+{"version":3,"sources":["index.css"],"names":[],"mappings":"AAAA,IACE,aAAc,CACd,yBACF,CAEA,yCACE,eACF","file":"main.4741c308.chunk.css","sourcesContent":["p a {\n  color: inherit;\n  text-decoration: underline;\n}\n\n.last-child-no-bottom-margin > :last-child {\n  margin-bottom: 0;\n}\n"]}
