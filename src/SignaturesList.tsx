@@ -34,8 +34,7 @@ const Signature = ({ index, chainId, signature, noneStatus }: SignatureProps): J
       <p className="text-muted text-break">{toPrintableSignature(signature)}</p>
       {noneStatus.error && (
         <Alert variant="warning">
-          Nonce outdated. In signature: {noneStatus.error.received}; Expected by chain:{" "}
-          {noneStatus.error.expected}
+          Nonce outdated. In signature: {noneStatus.error.received}; Expected: {noneStatus.error.expected}
         </Alert>
       )}
     </li>
@@ -62,26 +61,33 @@ class SignaturesList extends React.Component<SignaturesListPros, SignaturesListS
   }
 
   public componentDidMount(): void {
-    this.interval = setInterval(async () => {
-      const statuses = await Promise.all(
-        this.props.signatures.map(
-          async (signature): Promise<NonceStatus> => {
-            const latestNonce = await getNonce(this.props.chainId, signature.pubkey);
-            if (signature.nonce === latestNonce) {
-              return {};
-            } else {
-              return {
-                error: {
-                  expected: latestNonce,
-                  received: signature.nonce,
-                },
-              };
-            }
-          },
-        ),
-      );
-      this.setState({ nonceStatuses: statuses });
-    }, 5000);
+    const runCheck = async (): Promise<void> => {
+      try {
+        const statuses = await Promise.all(
+          this.props.signatures.map(
+            async (signature): Promise<NonceStatus> => {
+              const latestNonce = await getNonce(this.props.chainId, signature.pubkey);
+              if (signature.nonce === latestNonce) {
+                return {};
+              } else {
+                return {
+                  error: {
+                    expected: latestNonce,
+                    received: signature.nonce,
+                  },
+                };
+              }
+            },
+          ),
+        );
+        this.setState({ nonceStatuses: statuses });
+      } catch (error) {
+        console.warn(error);
+      }
+    };
+
+    setTimeout(runCheck, 300); // initial run
+    this.interval = setInterval(runCheck, 7000);
   }
 
   public componentWillUnmount(): void {
