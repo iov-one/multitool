@@ -102,35 +102,9 @@ class Status extends React.Component<StatusProps, StatusState> {
             <p>
               <button
                 className="btn btn-primary btn-sm"
-                onClick={async event => {
+                onClick={event => {
                   event.preventDefault();
-                  this.setState({ addSignatureError: undefined });
-
-                  if (!this.state.transaction) throw new Error("Original transaction not set");
-
-                  const signatureInput = prompt("Please enter signature");
-                  if (signatureInput === null) return;
-
-                  try {
-                    console.log(signatureInput);
-                    const newSignature = fromPrintableSignature(signatureInput);
-
-                    if (!(await verifySignature(this.state.transaction, newSignature))) {
-                      throw new Error("Signature is not valid for this transaction");
-                    }
-
-                    const existing = this.state.signatures.map(fullSignature => fullSignature.signature);
-                    if (existing.find(signature => arrayEquals(signature, newSignature.signature))) {
-                      throw new Error("This signature is already included");
-                    }
-
-                    this.setState({
-                      signatures: [...this.state.signatures, newSignature],
-                    });
-                  } catch (error) {
-                    console.info("Full error message", error);
-                    this.setState({ addSignatureError: getErrorMessage(error) });
-                  }
+                  this.addSignature();
                 }}
               >
                 Add signature
@@ -165,6 +139,40 @@ class Status extends React.Component<StatusProps, StatusState> {
         </Row>
       </Container>
     );
+  }
+
+  private async addSignature(): Promise<void> {
+    if (!this.state.transaction) throw new Error("Original transaction not set");
+
+    this.setState({ addSignatureError: undefined });
+
+    const signatureInput = prompt("Please enter signature");
+    if (signatureInput === null) return;
+
+    try {
+      const newSignature = fromPrintableSignature(signatureInput);
+
+      if (!(await verifySignature(this.state.transaction, newSignature))) {
+        throw new Error("Signature is not valid for this transaction");
+      }
+
+      const existing = this.state.signatures.map(fullSignature => fullSignature.signature);
+      if (existing.find(signature => arrayEquals(signature, newSignature.signature))) {
+        throw new Error("This signature is already included");
+      }
+
+      /** signatures by other accounts */
+      const otherSignatures = this.state.signatures.filter(
+        signature => !arrayEquals(signature.pubkey.data, newSignature.pubkey.data),
+      );
+
+      this.setState({
+        signatures: [...otherSignatures, newSignature],
+      });
+    } catch (error) {
+      console.info("Full error message", error);
+      this.setState({ addSignatureError: getErrorMessage(error) });
+    }
   }
 
   private postToChain(): void {
