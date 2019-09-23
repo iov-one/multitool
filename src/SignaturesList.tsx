@@ -100,6 +100,7 @@ class SignaturesList extends React.Component<SignaturesListPros, SignaturesListS
       <ol className="list-group mb-3">
         {this.props.signatures.map((signature, index) => (
           <Signature
+            key={toHex(signature.signature)}
             index={index}
             chainId={this.props.chainId}
             signature={signature}

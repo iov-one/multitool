@@ -1,6 +1,5 @@
 import { FullSignature, SendTransaction, SignedTransaction, TransactionId, WithCreator } from "@iov/bcp";
 import { MultisignatureTx } from "@iov/bns";
-import { Encoding } from "@iov/encoding";
 import React from "react";
 import Alert from "react-bootstrap/Alert";
 import Col from "react-bootstrap/Col";
@@ -15,8 +14,6 @@ import { postSignedTransaction } from "./util/connection";
 import { getErrorMessage } from "./util/errors";
 import { fromLinkEncoded, makeSigningLink } from "./util/links";
 import { fromPrintableSignature, makeSignedTransaction, verifySignature } from "./util/signatures";
-
-const { toHex } = Encoding;
 
 interface StatusProps {}
 
