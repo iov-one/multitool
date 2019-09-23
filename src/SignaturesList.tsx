@@ -21,7 +21,7 @@ interface SignatureProps {
   readonly index: number;
   readonly chainId: ChainId;
   readonly signature: FullSignature;
-  readonly noneStatus: NonceStatus;
+  readonly noneStatus?: NonceStatus;
 }
 
 const Signature = ({ index, chainId, signature, noneStatus }: SignatureProps): JSX.Element => {
@@ -32,7 +32,7 @@ const Signature = ({ index, chainId, signature, noneStatus }: SignatureProps): J
         {`#${index + 1}`} {ellideMiddle(address, 22)}
       </h5>
       <p className="text-muted text-break">{toPrintableSignature(signature)}</p>
-      {noneStatus.error && (
+      {noneStatus && noneStatus.error && (
         <Alert variant="warning">
           Nonce outdated. In signature: {noneStatus.error.received}; Expected: {noneStatus.error.expected}
         </Alert>
