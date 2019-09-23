@@ -78,13 +78,12 @@ class Status extends React.Component<StatusProps, StatusState> {
               <label htmlFor="signingLink">
                 Send this link to every user supposed to sign this transaction
               </label>
-              <textarea
+              <input
                 className="form-control"
                 id="signingLink"
-                rows={3}
                 value={this.state.original ? makeSigningLink(this.state.original, true) : ""}
                 readOnly={true}
-              ></textarea>
+              />
             </div>
           </Col>
         </Row>
