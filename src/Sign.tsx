@@ -9,6 +9,7 @@ import Row from "react-bootstrap/Row";
 import ConditionalError from "./ConditionalError";
 import { chains } from "./settings";
 import Transaction from "./Transaction";
+import { getErrorMessage } from "./util/errors";
 import { createSignature, getPubkeyFromLedger } from "./util/ledger";
 import { fromLinkEncoded } from "./util/links";
 import { toPrintableSignature } from "./util/signatures";
@@ -85,7 +86,7 @@ class Sign extends React.Component<SignProps, SignState> {
                     });
                   } catch (error) {
                     console.info("Full error message", error);
-                    const errorMessage = error instanceof Error ? error.message : error.toString();
+                    const errorMessage = getErrorMessage(error);
                     this.setState({
                       signingError: errorMessage,
                       signing: false,

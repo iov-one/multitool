@@ -24,6 +24,7 @@ import { chains } from "./settings";
 import Transaction from "./Transaction";
 import { amountToString } from "./util/amounts";
 import { getBalance } from "./util/connection";
+import { getErrorMessage } from "./util/errors";
 import { createSigned, getPubkeyFromLedger } from "./util/ledger";
 import { makeStatusLink } from "./util/links";
 
@@ -149,7 +150,7 @@ class Create extends React.Component<CreateProps, CreateState> {
         });
       }
     } catch (error) {
-      encodingError = error instanceof Error ? error.message : error.toString();
+      encodingError = getErrorMessage(error);
     }
 
     if (this.state.encodingError !== encodingError) {
@@ -375,10 +376,7 @@ class Create extends React.Component<CreateProps, CreateState> {
       },
       error => {
         console.info("Full error message", error);
-        const errorMessage = error instanceof Error ? error.message : error.toString();
-        this.setState({
-          getPubkeyError: errorMessage,
-        });
+        this.setState({ getPubkeyError: getErrorMessage(error) });
       },
     );
   }
@@ -401,9 +399,8 @@ class Create extends React.Component<CreateProps, CreateState> {
       },
       error => {
         console.info("Full error message", error);
-        const errorMessage = error instanceof Error ? error.message : error.toString();
         this.setState({
-          signingError: errorMessage,
+          signingError: getErrorMessage(error),
           signing: false,
         });
       },

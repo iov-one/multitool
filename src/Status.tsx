@@ -11,6 +11,7 @@ import ConditionalError from "./ConditionalError";
 import SignaturesList from "./SignaturesList";
 import Transaction from "./Transaction";
 import { postSignedTransaction } from "./util/connection";
+import { getErrorMessage } from "./util/errors";
 import { fromLinkEncoded, makeSigningLink } from "./util/links";
 import { fromPrintableSignature, makeSignedTransaction } from "./util/signatures";
 
@@ -112,8 +113,7 @@ class Status extends React.Component<StatusProps, StatusState> {
                     });
                   } catch (error) {
                     console.info("Full error message", error);
-                    const errorMessage = error instanceof Error ? error.message : error.toString();
-                    this.setState({ addSignatureError: errorMessage });
+                    this.setState({ addSignatureError: getErrorMessage(error) });
                   }
                 }}
               >
@@ -170,10 +170,9 @@ class Status extends React.Component<StatusProps, StatusState> {
       },
       error => {
         console.info("Full error message", error);
-        const errorMessage = error instanceof Error ? error.message : error.toString();
         this.setState({
           posting: false,
-          postError: errorMessage,
+          postError: getErrorMessage(error),
         });
       },
     );
