@@ -10,10 +10,11 @@ import Row from "react-bootstrap/Row";
 import ConditionalError from "./ConditionalError";
 import SignaturesList from "./SignaturesList";
 import Transaction from "./Transaction";
+import { arrayEquals } from "./util/arrays";
 import { postSignedTransaction } from "./util/connection";
 import { getErrorMessage } from "./util/errors";
 import { fromLinkEncoded, makeSigningLink } from "./util/links";
-import { fromPrintableSignature, makeSignedTransaction } from "./util/signatures";
+import { fromPrintableSignature, makeSignedTransaction, verifySignature } from "./util/signatures";
 
 const { toHex } = Encoding;
 
@@ -104,24 +105,30 @@ class Status extends React.Component<StatusProps, StatusState> {
             <p>
               <button
                 className="btn btn-primary btn-sm"
-                onClick={event => {
+                onClick={async event => {
                   event.preventDefault();
                   this.setState({ addSignatureError: undefined });
 
-                  const signature = prompt("Please enter signature");
-                  if (signature === null) return;
+                  if (!this.state.original) throw new Error("Original transaction not set");
+
+                  const signatureInput = prompt("Please enter signature");
+                  if (signatureInput === null) return;
 
                   try {
-                    console.log(signature);
-                    const fullSignature = fromPrintableSignature(signature);
+                    console.log(signatureInput);
+                    const newSignature = fromPrintableSignature(signatureInput);
 
-                    const existingPubkeys = this.state.signatures.map(sig => toHex(sig.pubkey.data));
-                    if (existingPubkeys.find(pubkeyHex => pubkeyHex === toHex(fullSignature.pubkey.data))) {
-                      throw new Error("Signature of this account already included");
+                    if (!(await verifySignature(this.state.original.transaction, newSignature))) {
+                      throw new Error("Signature is not valid for this transaction");
+                    }
+
+                    const existing = this.state.signatures.map(fullSignature => fullSignature.signature);
+                    if (existing.find(signature => arrayEquals(signature, newSignature.signature))) {
+                      throw new Error("This signature is already included");
                     }
 
                     this.setState({
-                      signatures: [...this.state.signatures, fullSignature],
+                      signatures: [...this.state.signatures, newSignature],
                     });
                   } catch (error) {
                     console.info("Full error message", error);

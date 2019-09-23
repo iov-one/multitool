@@ -3,11 +3,13 @@ import {
   isFullSignature,
   isSendTransaction,
   isUnsignedTransaction,
+  PrehashType,
   SendTransaction,
   SignedTransaction,
   WithCreator,
 } from "@iov/bcp";
-import { isMultisignatureTx, MultisignatureTx } from "@iov/bns";
+import { bnsCodec, isMultisignatureTx, MultisignatureTx } from "@iov/bns";
+import { Ed25519, Sha512 } from "@iov/crypto";
 import { isNonNullObject, TransactionEncoder } from "@iov/encoding";
 
 export function isSignedMultisignatureSendTransaction(
@@ -51,4 +53,21 @@ export function makeSignedTransaction(
     primarySignature: firstSignature,
     otherSignatures: signatures.slice(1),
   };
+}
+
+export async function verifySignature(
+  transaction: SendTransaction & MultisignatureTx & WithCreator,
+  signature: FullSignature,
+): Promise<boolean> {
+  const { bytes, prehashType } = bnsCodec.bytesToSign(transaction, signature.nonce);
+
+  switch (prehashType) {
+    case PrehashType.Sha512: {
+      const prehash = new Sha512(bytes).digest();
+      const valid = await Ed25519.verifySignature(signature.signature, prehash, signature.pubkey.data);
+      return valid;
+    }
+    default:
+      throw new Error("Unexpected prehash type");
+  }
 }
