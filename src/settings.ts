@@ -49,11 +49,11 @@ const mainnet: Chain = [
     id: "iov-mainnet" as ChainId,
     tokenTicker: "IOV" as TokenTicker,
     fee: {
-      quantity: "100000000",
+      quantity: "500000000",
       fractionalDigits: 9,
       tokenTicker: "IOV" as TokenTicker,
     },
-    nodeUrl: "wss://rpc.mainnet.iov.one",
+    nodeUrl: "wss://rpc-private-a.iov.one",
     networkType: "mainnet",
     recipientPrefix: "iov",
   },
