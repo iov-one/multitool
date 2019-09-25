@@ -43,6 +43,22 @@ const boarnet: Chain = [
   },
 ];
 
+const babynet: Chain = [
+  "iov-babynet",
+  {
+    id: "iov-babynet" as ChainId,
+    tokenTicker: "IOV" as TokenTicker,
+    fee: {
+      quantity: "500000000",
+      fractionalDigits: 9,
+      tokenTicker: "IOV" as TokenTicker,
+    },
+    nodeUrl: "wss://rpc-private-a-vip-babynet.iov.one",
+    networkType: "testnet",
+    recipientPrefix: "tiov",
+  },
+];
+
 const mainnet: Chain = [
   "iov-mainnet",
   {
@@ -59,4 +75,4 @@ const mainnet: Chain = [
   },
 ];
 
-export const chains = new Map<string, ChainInfo>([devnet, boarnet, mainnet]);
+export const chains = new Map<string, ChainInfo>([devnet, boarnet, babynet, mainnet]);
