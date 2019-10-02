@@ -59,6 +59,22 @@ const babynet: Chain = [
   },
 ];
 
+const clapnet: Chain = [
+  "iov-clapnet",
+  {
+    id: "iov-clapnet" as ChainId,
+    tokenTicker: "IOV" as TokenTicker,
+    fee: {
+      quantity: "500000000",
+      fractionalDigits: 9,
+      tokenTicker: "IOV" as TokenTicker,
+    },
+    nodeUrl: "wss://rpc-private-a-vip2-clapnet.iov.one",
+    networkType: "testnet",
+    recipientPrefix: "tiov",
+  },
+];
+
 const mainnet: Chain = [
   "iov-mainnet",
   {
@@ -75,4 +91,4 @@ const mainnet: Chain = [
   },
 ];
 
-export const chains = new Map<string, ChainInfo>([devnet, boarnet, babynet, mainnet]);
+export const chains = new Map<string, ChainInfo>([devnet, boarnet, babynet, clapnet, mainnet]);
