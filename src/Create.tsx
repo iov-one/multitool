@@ -83,7 +83,7 @@ function expectedPrefixforNetwork(network: "mainnet" | "testnet"): "iov" | "tiov
 class Create extends React.Component<CreateProps, CreateState> {
   public constructor(props: CreateProps) {
     super(props);
-    this.state = { ...testingState };
+    this.state = { ...emptyState };
   }
 
   public componentDidUpdate(): void {
