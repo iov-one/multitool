@@ -76,6 +76,10 @@ const testingState: CreateState = {
   signing: false,
 };
 
+function expectedPrefixforNetwork(network: "mainnet" | "testnet"): "iov" | "tiov" {
+  return network === "mainnet" ? "iov" : "tiov";
+}
+
 class Create extends React.Component<CreateProps, CreateState> {
   public constructor(props: CreateProps) {
     super(props);
@@ -115,8 +119,9 @@ class Create extends React.Component<CreateProps, CreateState> {
 
       if (!this.state.creatorHex) throw new Error("Transaction creator unset");
 
-      if (!this.state.formRecipient.startsWith(chain.recipientPrefix)) {
-        throw new Error(`Recipient address with prefix '${chain.recipientPrefix}' expected`);
+      const expectedPrefix = expectedPrefixforNetwork(chain.networkType);
+      if (!this.state.formRecipient.startsWith(expectedPrefix)) {
+        throw new Error(`Recipient address with prefix '${expectedPrefix}' expected`);
       }
 
       const tx: SendTransaction & MultisignatureTx & WithCreator = {

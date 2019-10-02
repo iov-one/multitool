@@ -6,7 +6,6 @@ export interface ChainInfo {
   readonly fee: Amount;
   readonly nodeUrl: string;
   readonly networkType: "testnet" | "mainnet";
-  readonly recipientPrefix: "tiov" | "iov";
 }
 
 type Chain = [string, ChainInfo];
@@ -23,7 +22,6 @@ const devnet: Chain = [
     },
     nodeUrl: "ws://localhost:23456/",
     networkType: "testnet",
-    recipientPrefix: "tiov",
   },
 ];
 
@@ -39,7 +37,6 @@ const boarnet: Chain = [
     },
     nodeUrl: "wss://rpc.boarnet.iov.one",
     networkType: "testnet",
-    recipientPrefix: "tiov",
   },
 ];
 
@@ -55,7 +52,6 @@ const babynet: Chain = [
     },
     nodeUrl: "wss://rpc-private-a-vip-babynet.iov.one",
     networkType: "testnet",
-    recipientPrefix: "tiov",
   },
 ];
 
@@ -71,7 +67,6 @@ const clapnet: Chain = [
     },
     nodeUrl: "wss://rpc-private-a-vip2-clapnet.iov.one",
     networkType: "testnet",
-    recipientPrefix: "tiov",
   },
 ];
 
@@ -87,7 +82,6 @@ const mainnet: Chain = [
     },
     nodeUrl: "wss://rpc-private-a.iov.one",
     networkType: "mainnet",
-    recipientPrefix: "iov",
   },
 ];
 
