@@ -111,11 +111,8 @@ class Create extends React.Component<CreateProps, CreateState> {
           .catch(error => console.error(error));
       }
 
-      const multisigId = Uint64.fromString(this.state.formMultisigContractId);
-      const sender = multisignatureIdToAddress(
-        this.state.chainId as ChainId,
-        Uint8Array.from(multisigId.toBytesBigEndian()),
-      );
+      const multisigId = Uint64.fromString(this.state.formMultisigContractId).toNumber();
+      const sender = multisignatureIdToAddress(this.state.chainId as ChainId, multisigId);
 
       if (!this.state.creatorHex) throw new Error("Transaction creator unset");
 
@@ -142,7 +139,7 @@ class Create extends React.Component<CreateProps, CreateState> {
         recipient: this.state.formRecipient as Address,
         memo: this.state.formMemo,
         fee: { tokens: chain.fee },
-        multisig: [multisigId.toNumber()],
+        multisig: [multisigId],
       };
 
       // test serialization for input validation
