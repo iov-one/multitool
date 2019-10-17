@@ -65,7 +65,7 @@ const mainnet: Chain = [
       fractionalDigits: 9,
       tokenTicker: "IOV" as TokenTicker,
     },
-    nodeUrl: "wss://rpc-private-a.iov.one",
+    nodeUrl: "wss://rpc-private-a-vip-mainnet.iov.one",
     networkType: "mainnet",
   },
 ];
