@@ -1,5 +1,7 @@
 # IOV Multitool
 
+[![Build Status](https://travis-ci.com/iov-one/multitool.svg?branch=master)](https://travis-ci.com/iov-one/multitool)
+
 Create multisignature send transactions using hardware wallets
 
 ## Use hosted
