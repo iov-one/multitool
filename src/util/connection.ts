@@ -10,7 +10,6 @@ import {
   SendTransaction,
   SignedTransaction,
   TransactionId,
-  WithCreator,
 } from "@iov/bcp";
 import { bnsCodec, createBnsConnector, multisignatureIdToAddress, MultisignatureTx } from "@iov/bns";
 
@@ -48,9 +47,9 @@ export async function getBalance(
 }
 
 export async function postSignedTransaction(
-  signed: SignedTransaction<SendTransaction & MultisignatureTx & WithCreator>,
+  signed: SignedTransaction<SendTransaction & MultisignatureTx>,
 ): Promise<TransactionId> {
-  const connector = await getConnector(signed.transaction.creator.chainId);
+  const connector = await getConnector(signed.transaction.chainId);
   const bnsConnection = await connector.establishConnection();
 
   const response = await bnsConnection.postTx(bnsCodec.bytesToPost(signed));

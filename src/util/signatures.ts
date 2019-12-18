@@ -1,13 +1,14 @@
 import {
   FullSignature,
   isFullSignature,
+  isNonEmptyArray,
   isSendTransaction,
+  isSignedTransaction,
   isUnsignedTransaction,
   PrehashType,
   SendTransaction,
   SignedTransaction,
   UnsignedTransaction,
-  WithCreator,
 } from "@iov/bcp";
 import { bnsCodec, isMultisignatureTx, MultisignatureTx } from "@iov/bns";
 import { Ed25519, Sha512 } from "@iov/crypto";
@@ -15,7 +16,7 @@ import { isNonNullObject, TransactionEncoder } from "@iov/encoding";
 
 export function isUnsignedMultisignatureSendTransaction(
   data: unknown,
-): data is SendTransaction & MultisignatureTx & WithCreator {
+): data is SendTransaction & MultisignatureTx {
   if (!isNonNullObject(data)) return false;
 
   const transaction = data as SignedTransaction;
@@ -28,15 +29,9 @@ export function isUnsignedMultisignatureSendTransaction(
 
 export function isSignedMultisignatureSendTransaction(
   data: unknown,
-): data is SignedTransaction<SendTransaction & MultisignatureTx & WithCreator> {
-  if (!isNonNullObject(data)) return false;
-
-  const { transaction, primarySignature, otherSignatures } = data as SignedTransaction;
-
-  if (!isUnsignedMultisignatureSendTransaction(transaction)) return false;
-  if (!isFullSignature(primarySignature)) return false;
-  if (!Array.isArray(otherSignatures) || otherSignatures.some(sig => !isFullSignature(sig))) return false;
-
+): data is SignedTransaction<SendTransaction & MultisignatureTx> {
+  if (!isSignedTransaction(data)) return false;
+  if (!isUnsignedMultisignatureSendTransaction(data.transaction)) return false;
   return true;
 }
 
@@ -55,20 +50,18 @@ export function toPrintableSignedTransaction(transaction: SignedTransaction | Un
 }
 
 export function makeSignedTransaction(
-  transaction: SendTransaction & MultisignatureTx & WithCreator,
+  transaction: SendTransaction & MultisignatureTx,
   signatures: readonly FullSignature[],
-): SignedTransaction<SendTransaction & MultisignatureTx & WithCreator> {
-  const firstSignature = signatures.find(() => true);
-  if (!firstSignature) throw new Error("First signature missing");
+): SignedTransaction<SendTransaction & MultisignatureTx> {
+  if (!isNonEmptyArray(signatures)) throw new Error("First signature missing");
   return {
     transaction: transaction,
-    primarySignature: firstSignature,
-    otherSignatures: signatures.slice(1),
+    signatures: signatures,
   };
 }
 
 export async function verifySignature(
-  transaction: SendTransaction & MultisignatureTx & WithCreator,
+  transaction: SendTransaction & MultisignatureTx,
   signature: FullSignature,
 ): Promise<boolean> {
   const { bytes, prehashType } = bnsCodec.bytesToSign(transaction, signature.nonce);

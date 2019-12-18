@@ -3,11 +3,11 @@ import {
   Algorithm,
   Amount,
   ChainId,
+  Identity,
   Nonce,
   PubkeyBytes,
   SendTransaction,
   UnsignedTransaction,
-  WithCreator,
 } from "@iov/bcp";
 import { bnsCodec, multisignatureIdToAddress, MultisignatureTx } from "@iov/bns";
 import { Decimal, Encoding, Uint64 } from "@iov/encoding";
@@ -25,7 +25,7 @@ import Transaction from "./Transaction";
 import { amountToString } from "./util/amounts";
 import { getBalance } from "./util/connection";
 import { getErrorMessage } from "./util/errors";
-import { createSigned, getPubkeyFromLedger } from "./util/ledger";
+import { createWithFirstSignature, getPubkeyFromLedger } from "./util/ledger";
 import { makeStatusLink } from "./util/links";
 
 interface CreateProps {}
@@ -121,15 +121,9 @@ class Create extends React.Component<CreateProps, CreateState> {
         throw new Error(`Recipient address with prefix '${expectedPrefix}' expected`);
       }
 
-      const tx: SendTransaction & MultisignatureTx & WithCreator = {
+      const tx: SendTransaction & MultisignatureTx = {
         kind: "bcp/send",
-        creator: {
-          chainId: this.state.chainId as ChainId,
-          pubkey: {
-            algo: Algorithm.Ed25519,
-            data: Encoding.fromHex(this.state.creatorHex) as PubkeyBytes,
-          },
-        },
+        chainId: this.state.chainId as ChainId,
         amount: {
           quantity: Decimal.fromUserInput(this.state.formQuantity, 9).atomics,
           fractionalDigits: 9,
@@ -390,7 +384,15 @@ class Create extends React.Component<CreateProps, CreateState> {
     });
 
     if (!this.state.unsignedTransaction) throw new Error("unsigned transaction not set");
-    createSigned(this.state.unsignedTransaction).then(
+
+    const firstSigner: Identity = {
+      chainId: this.state.chainId as ChainId,
+      pubkey: {
+        algo: Algorithm.Ed25519,
+        data: Encoding.fromHex(this.state.creatorHex) as PubkeyBytes,
+      },
+    };
+    createWithFirstSignature(this.state.unsignedTransaction, firstSigner).then(
       signed => {
         const statusUrl = makeStatusLink(signed);
         console.log("Navigating to", statusUrl);
