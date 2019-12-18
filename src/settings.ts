@@ -70,4 +70,7 @@ const mainnet: Chain = [
   },
 ];
 
-export const chains = new Map<string, ChainInfo>([devnet, babynet, clapnet, mainnet]);
+const devnets: readonly Chain[] = process.env.NODE_ENV === "development" ? [devnet] : [];
+const testnets: readonly Chain[] = [babynet, clapnet];
+
+export const chains = new Map<string, ChainInfo>([...devnets, ...testnets, mainnet]);
