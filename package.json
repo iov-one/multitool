@@ -24,11 +24,11 @@
     "not op_mini all"
   ],
   "dependencies": {
-    "@iov/bcp": "^1.0.0-alpha.1",
-    "@iov/bns": "^1.0.0-alpha.1",
-    "@iov/crypto": "^1.0.0-alpha.1",
-    "@iov/encoding": "^1.0.0-alpha.1",
-    "@iov/keycontrol": "^1.0.0-alpha.1",
+    "@iov/bcp": "^1.2.0",
+    "@iov/bns": "^1.2.0",
+    "@iov/crypto": "^1.2.0",
+    "@iov/encoding": "^1.2.0",
+    "@iov/keycontrol": "^1.2.0",
     "@iov/ledger-bns": "^0.14.2",
     "@ledgerhq/hw-transport-webusb": "^4.68.4",
     "@types/node": "^10",
