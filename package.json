@@ -34,7 +34,7 @@
     "@types/node": "^10",
     "bootstrap": "^4.3.1",
     "clipboard-copy": "^3.1.0",
-    "fast-deep-equal": "^2.0.1",
+    "fast-deep-equal": "^3",
     "react": "^16.9.0",
     "react-bootstrap": "^1.0.0-beta.10",
     "react-dom": "^16.9.0",
