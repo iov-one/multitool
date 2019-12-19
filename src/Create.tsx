@@ -174,7 +174,7 @@ class Create extends React.Component<CreateProps, CreateState> {
                   onChange={e => this.handleFormChange("chainId", e)}
                 >
                   {Array.from(chains.keys()).map(chainId => (
-                    <option>{chainId}</option>
+                    <option key={chainId}>{chainId}</option>
                   ))}
                 </select>
               </div>
