@@ -1,4 +1,4 @@
-import { FullSignature, SendTransaction, TransactionId, WithCreator } from "@iov/bcp";
+import { FullSignature, SendTransaction, TransactionId } from "@iov/bcp";
 import { MultisignatureTx } from "@iov/bns";
 import React from "react";
 import Alert from "react-bootstrap/Alert";
@@ -18,7 +18,7 @@ import { fromPrintableSignature, makeSignedTransaction, verifySignature } from "
 interface StatusProps {}
 
 interface StatusState {
-  readonly transaction: (SendTransaction & MultisignatureTx & WithCreator) | null;
+  readonly transaction: (SendTransaction & MultisignatureTx) | null;
   readonly signatures: readonly FullSignature[];
   readonly localSignature: string;
   readonly addSignatureError?: string;
@@ -45,10 +45,10 @@ class Status extends React.Component<StatusProps, StatusState> {
       if (matches && matches.length >= 2) {
         try {
           const signedTransaction = signedFromLinkEncoded(matches[1]);
-          const { transaction, primarySignature, otherSignatures } = signedTransaction;
+          const { transaction, signatures } = signedTransaction;
           this.setState({
             transaction: transaction,
-            signatures: [primarySignature, ...otherSignatures],
+            signatures: signatures,
           });
         } catch (error) {
           console.warn("Full error message", error);
@@ -93,10 +93,7 @@ class Status extends React.Component<StatusProps, StatusState> {
           <Col className="col-6">
             <h2>Signatures</h2>
             {this.state.transaction && (
-              <SignaturesList
-                chainId={this.state.transaction.creator.chainId}
-                signatures={this.state.signatures}
-              />
+              <SignaturesList chainId={this.state.transaction.chainId} signatures={this.state.signatures} />
             )}
 
             <p>

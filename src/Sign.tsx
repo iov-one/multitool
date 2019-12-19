@@ -1,4 +1,4 @@
-import { Algorithm, Identity, PubkeyBytes, SendTransaction, WithCreator } from "@iov/bcp";
+import { Algorithm, Identity, PubkeyBytes, SendTransaction } from "@iov/bcp";
 import { MultisignatureTx } from "@iov/bns";
 import React from "react";
 import Alert from "react-bootstrap/Alert";
@@ -17,7 +17,7 @@ import { toPrintableSignature } from "./util/signatures";
 interface SignProps {}
 
 interface SignState {
-  readonly transaction: (SendTransaction & MultisignatureTx & WithCreator) | null;
+  readonly transaction: (SendTransaction & MultisignatureTx) | null;
   readonly localSignature: string;
   readonly signingError?: string;
   readonly globalError?: string;
@@ -122,13 +122,13 @@ class Sign extends React.Component<SignProps, SignState> {
     const original = this.state.transaction;
     if (!original) throw new Error("Transaction not set");
 
-    const chain = chains.get(original.creator.chainId);
+    const chain = chains.get(original.chainId);
     if (!chain) throw new Error("Chain not found");
 
     const pubkeyResponse = await getPubkeyFromLedger(chain.networkType);
 
     const signer: Identity = {
-      chainId: original.creator.chainId,
+      chainId: original.chainId,
       pubkey: {
         algo: Algorithm.Ed25519,
         data: pubkeyResponse.pubkey as PubkeyBytes,

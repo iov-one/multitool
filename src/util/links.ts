@@ -1,4 +1,4 @@
-import { SendTransaction, SignedTransaction, UnsignedTransaction, WithCreator } from "@iov/bcp";
+import { SendTransaction, SignedTransaction, UnsignedTransaction } from "@iov/bcp";
 import { MultisignatureTx } from "@iov/bns";
 import { Encoding, TransactionEncoder } from "@iov/encoding";
 
@@ -19,28 +19,26 @@ function toLinkEncoded(transaction: SignedTransaction | UnsignedTransaction): st
 
 export function signedFromLinkEncoded(
   encoded: string,
-): SignedTransaction<SendTransaction & MultisignatureTx & WithCreator> {
+): SignedTransaction<SendTransaction & MultisignatureTx> {
   const data = decodeChecksummed(encoded, base64urlDecode);
   const signedTransaction = TransactionEncoder.fromJson(JSON.parse(fromUtf8(data)));
   if (!isSignedMultisignatureSendTransaction(signedTransaction)) {
-    throw new Error(
-      "Transaction data is not an SignedTransaction<SendTransaction & MultisignatureTx & WithCreator>",
-    );
+    throw new Error("Transaction data is not an SignedTransaction<SendTransaction & MultisignatureTx>");
   }
   return signedTransaction;
 }
 
-export function unsignedFromLinkEncoded(encoded: string): SendTransaction & MultisignatureTx & WithCreator {
+export function unsignedFromLinkEncoded(encoded: string): SendTransaction & MultisignatureTx {
   const data = decodeChecksummed(encoded, base64urlDecode);
   const unsignedTransaction = TransactionEncoder.fromJson(JSON.parse(fromUtf8(data)));
   if (!isUnsignedMultisignatureSendTransaction(unsignedTransaction)) {
-    throw new Error("Transaction data is not an SendTransaction & MultisignatureTx & WithCreator");
+    throw new Error("Transaction data is not an SendTransaction & MultisignatureTx");
   }
   return unsignedTransaction;
 }
 
 export function makeStatusLink(
-  signedTransaction: SignedTransaction<SendTransaction & MultisignatureTx & WithCreator>,
+  signedTransaction: SignedTransaction<SendTransaction & MultisignatureTx>,
   absolute = false,
 ): string {
   const encodedTransaction = toLinkEncoded(signedTransaction);
@@ -50,7 +48,7 @@ export function makeStatusLink(
 }
 
 export function makeSigningLink(
-  unsignedTransaction: SendTransaction & MultisignatureTx & WithCreator,
+  unsignedTransaction: SendTransaction & MultisignatureTx,
   absolute = false,
 ): string {
   const encodedTransaction = toLinkEncoded(unsignedTransaction);

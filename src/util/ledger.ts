@@ -6,7 +6,6 @@ import {
   SignatureBytes,
   SignedTransaction,
   UnsignedTransaction,
-  WithCreator,
 } from "@iov/bcp";
 import { bnsCodec, MultisignatureTx } from "@iov/bns";
 import {
@@ -86,13 +85,13 @@ export async function createSignature(
   }
 }
 
-export async function createSigned(
+export async function createWithFirstSignature(
   unsigned: UnsignedTransaction & SendTransaction & MultisignatureTx,
-): Promise<SignedTransaction<SendTransaction & MultisignatureTx & WithCreator>> {
-  const signature = await createSignature(unsigned, unsigned.creator);
+  signer: Identity,
+): Promise<SignedTransaction<SendTransaction & MultisignatureTx>> {
+  const signature = await createSignature(unsigned, signer);
   return {
     transaction: unsigned,
-    primarySignature: signature,
-    otherSignatures: [],
+    signatures: [signature],
   };
 }
