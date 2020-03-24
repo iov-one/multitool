@@ -58,7 +58,7 @@ const mainnet: Chain = [
 const minikube: Chain = [
   "minikube",
   {
-    id: process.env.REACT_APP_MINIKUBE_CHAIN_ID as ChainId,
+    id: (process.env.REACT_APP_MINIKUBE_CHAIN_ID || "minikube") as ChainId,
     tokenTicker: (process.env.REACT_APP_MINIKUBE_TOKEN || "IOV") as TokenTicker,
     fee: {
       quantity: process.env.REACT_APP_MINIKUBE_MINIMAL_FEE || "500000000",
