@@ -28,9 +28,9 @@ import { getErrorMessage } from "./util/errors";
 import { createWithFirstSignature, getPubkeyFromLedger } from "./util/ledger";
 import { makeStatusLink } from "./util/links";
 
-interface CreateProps {}
+interface SendProps {}
 
-interface CreateState {
+interface SendState {
   readonly creatorHex: string;
   readonly chainId: string;
   readonly formMultisigContractId: string;
@@ -53,7 +53,7 @@ interface CreateState {
 type FormField = "chainId" | "multisigContractId" | "recipient" | "quantity" | "memo";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const emptyState: CreateState = {
+const emptyState: SendState = {
   creatorHex: "",
   chainId: "iov-mainnet",
   formMultisigContractId: "",
@@ -65,7 +65,7 @@ const emptyState: CreateState = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const testingState: CreateState = {
+const testingState: SendState = {
   creatorHex: "",
   chainId: "iov-boarnet",
   formMultisigContractId: "21",
@@ -80,8 +80,8 @@ function expectedPrefixforNetwork(network: "mainnet" | "testnet"): "iov" | "tiov
   return network === "mainnet" ? "iov" : "tiov";
 }
 
-class Create extends React.Component<CreateProps, CreateState> {
-  public constructor(props: CreateProps) {
+class Send extends React.Component<SendProps, SendState> {
+  public constructor(props: SendProps) {
     super(props);
     this.state = { ...emptyState };
   }
@@ -412,4 +412,4 @@ class Create extends React.Component<CreateProps, CreateState> {
   }
 }
 
-export default Create;
+export default Send;
