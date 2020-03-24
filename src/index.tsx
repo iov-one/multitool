@@ -1,12 +1,10 @@
-// eslint-disable-next-line simple-import-sort/sort
 import "bootstrap/dist/css/bootstrap.css";
-import "./index.css";
-
 import React from "react";
 import ReactDOM from "react-dom";
 import { Route, Switch } from "react-router";
 import { HashRouter } from "react-router-dom";
 
+import "./index.css";
 import Send from "./Send";
 import Sign from "./Sign";
 import Start from "./Start";
