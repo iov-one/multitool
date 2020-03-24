@@ -65,7 +65,7 @@ const minikube: Chain = [
       fractionalDigits: 9,
       tokenTicker: (process.env.REACT_APP_MINIKUBE_TOKEN || "IOV") as TokenTicker,
     },
-    nodeUrl: process.env.REACT_APP_MINIKUBE_TOKEN || "ws://minikube:30657",
+    nodeUrl: process.env.REACT_APP_MINIKUBE_RPC_URL || "ws://minikube:30657",
     networkType:
       process.env.REACT_APP_MINIKUBE_CHAIN_ID?.indexOf("iov-mainnet") === 0 ? "mainnet" : "testnet",
   },
