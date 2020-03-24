@@ -1,3 +1,4 @@
+// eslint-disable-next-line simple-import-sort/sort
 import "bootstrap/dist/css/bootstrap.css";
 import "./index.css";
 
