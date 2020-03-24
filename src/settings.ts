@@ -25,17 +25,17 @@ const devnet: Chain = [
   },
 ];
 
-const dancenet: Chain = [
-  "iov-dancenet",
+const exchangenet: Chain = [
+  "iov-exchangenet",
   {
-    id: "iov-dancenet" as ChainId,
+    id: "iov-exchangenet" as ChainId,
     tokenTicker: "IOV" as TokenTicker,
     fee: {
       quantity: "500000000",
       fractionalDigits: 9,
       tokenTicker: "IOV" as TokenTicker,
     },
-    nodeUrl: "wss://rpc-private-a-x-dancenet.iov.one",
+    nodeUrl: "wss://rpc-private-a-x-exchangenet.iov.one",
     networkType: "testnet",
   },
 ];
@@ -56,6 +56,6 @@ const mainnet: Chain = [
 ];
 
 const devnets: readonly Chain[] = process.env.NODE_ENV === "development" ? [devnet] : [];
-const testnets: readonly Chain[] = [dancenet];
+const testnets: readonly Chain[] = [exchangenet];
 
 export const chains = new Map<string, ChainInfo>([...devnets, ...testnets, mainnet]);
