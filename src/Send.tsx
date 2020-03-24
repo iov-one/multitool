@@ -28,11 +28,11 @@ import { getErrorMessage } from "./util/errors";
 import { createWithFirstSignature, getPubkeyFromLedger } from "./util/ledger";
 import { makeStatusLink } from "./util/links";
 
-interface CreateProps {}
+interface SendProps {}
 
-interface CreateState {
+interface SendState {
   readonly creatorHex: string;
-  readonly chainId: string;
+  readonly chain: string;
   readonly formMultisigContractId: string;
   readonly formRecipient: string;
   readonly formQuantity: string;
@@ -53,9 +53,9 @@ interface CreateState {
 type FormField = "chainId" | "multisigContractId" | "recipient" | "quantity" | "memo";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const emptyState: CreateState = {
+const emptyState: SendState = {
   creatorHex: "",
-  chainId: "iov-mainnet",
+  chain: "iov-mainnet",
   formMultisigContractId: "",
   formRecipient: "",
   formQuantity: "",
@@ -65,9 +65,9 @@ const emptyState: CreateState = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const testingState: CreateState = {
+const testingState: SendState = {
   creatorHex: "",
-  chainId: "iov-boarnet",
+  chain: "iov-exchangenet",
   formMultisigContractId: "21",
   formRecipient: "tiov1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplsnxjl",
   formQuantity: "100.56",
@@ -80,8 +80,8 @@ function expectedPrefixforNetwork(network: "mainnet" | "testnet"): "iov" | "tiov
   return network === "mainnet" ? "iov" : "tiov";
 }
 
-class Create extends React.Component<CreateProps, CreateState> {
-  public constructor(props: CreateProps) {
+class Send extends React.Component<SendProps, SendState> {
+  public constructor(props: SendProps) {
     super(props);
     this.state = { ...emptyState };
   }
@@ -90,7 +90,7 @@ class Create extends React.Component<CreateProps, CreateState> {
     let encodingError: string | null = null;
 
     try {
-      const chain = chains.get(this.state.chainId);
+      const chain = chains.get(this.state.chain);
       if (!chain) throw new Error("No configuration for theis chain ID found");
 
       if (this.state.lastQueriedMultisigContractId !== this.state.formMultisigContractId) {
@@ -112,7 +112,7 @@ class Create extends React.Component<CreateProps, CreateState> {
       }
 
       const multisigId = Uint64.fromString(this.state.formMultisigContractId).toNumber();
-      const sender = multisignatureIdToAddress(this.state.chainId as ChainId, multisigId);
+      const sender = multisignatureIdToAddress(chain.id as ChainId, multisigId);
 
       if (!this.state.creatorHex) throw new Error("Transaction creator unset");
 
@@ -123,7 +123,7 @@ class Create extends React.Component<CreateProps, CreateState> {
 
       const tx: SendTransaction & MultisignatureTx = {
         kind: "bcp/send",
-        chainId: this.state.chainId as ChainId,
+        chainId: chain.id as ChainId,
         amount: {
           quantity: Decimal.fromUserInput(this.state.formQuantity, 9).atomics,
           fractionalDigits: 9,
@@ -170,11 +170,11 @@ class Create extends React.Component<CreateProps, CreateState> {
                 <select
                   className="form-control"
                   id="chainIdInput"
-                  value={this.state.chainId}
+                  value={this.state.chain}
                   onChange={e => this.handleFormChange("chainId", e)}
                 >
-                  {Array.from(chains.keys()).map(chainId => (
-                    <option key={chainId}>{chainId}</option>
+                  {Array.from(chains.entries()).map(entry => (
+                    <option key={entry[0] + entry[1].id}>{entry[0]}</option>
                   ))}
                 </select>
               </div>
@@ -332,7 +332,7 @@ class Create extends React.Component<CreateProps, CreateState> {
 
     switch (field) {
       case "chainId":
-        this.setState({ chainId: newValue });
+        this.setState({ chain: newValue });
         break;
       case "multisigContractId":
         this.setState({ formMultisigContractId: newValue });
@@ -361,7 +361,7 @@ class Create extends React.Component<CreateProps, CreateState> {
   private reloadCreatorFromLedger(): void {
     this.clearCreator();
 
-    const chain = chains.get(this.state.chainId);
+    const chain = chains.get(this.state.chain);
     if (!chain) throw new Error("Chain not found");
 
     getPubkeyFromLedger(chain.networkType).then(
@@ -385,8 +385,9 @@ class Create extends React.Component<CreateProps, CreateState> {
 
     if (!this.state.unsignedTransaction) throw new Error("unsigned transaction not set");
 
+    const chain = chains.get(this.state.chain);
     const firstSigner: Identity = {
-      chainId: this.state.chainId as ChainId,
+      chainId: chain?.id as ChainId,
       pubkey: {
         algo: Algorithm.Ed25519,
         data: Encoding.fromHex(this.state.creatorHex) as PubkeyBytes,
@@ -412,4 +413,4 @@ class Create extends React.Component<CreateProps, CreateState> {
   }
 }
 
-export default Create;
+export default Send;

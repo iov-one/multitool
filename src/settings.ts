@@ -25,17 +25,17 @@ const devnet: Chain = [
   },
 ];
 
-const dancenet: Chain = [
-  "iov-dancenet",
+const exchangenet: Chain = [
+  "iov-exchangenet",
   {
-    id: "iov-dancenet" as ChainId,
+    id: "iov-exchangenet" as ChainId,
     tokenTicker: "IOV" as TokenTicker,
     fee: {
       quantity: "500000000",
       fractionalDigits: 9,
       tokenTicker: "IOV" as TokenTicker,
     },
-    nodeUrl: "wss://rpc-private-a-x-dancenet.iov.one",
+    nodeUrl: "wss://rpc-private-a-x-exchangenet.iov.one",
     networkType: "testnet",
   },
 ];
@@ -55,7 +55,23 @@ const mainnet: Chain = [
   },
 ];
 
-const devnets: readonly Chain[] = process.env.NODE_ENV === "development" ? [devnet] : [];
-const testnets: readonly Chain[] = [dancenet];
+const minikube: Chain = [
+  "minikube",
+  {
+    id: (process.env.REACT_APP_MINIKUBE_CHAIN_ID || "minikube") as ChainId,
+    tokenTicker: (process.env.REACT_APP_MINIKUBE_TOKEN || "IOV") as TokenTicker,
+    fee: {
+      quantity: process.env.REACT_APP_MINIKUBE_MINIMAL_FEE || "500000000",
+      fractionalDigits: 9,
+      tokenTicker: (process.env.REACT_APP_MINIKUBE_TOKEN || "IOV") as TokenTicker,
+    },
+    nodeUrl: process.env.REACT_APP_MINIKUBE_RPC_URL || "ws://minikube:30657",
+    networkType:
+      process.env.REACT_APP_MINIKUBE_CHAIN_ID?.indexOf("iov-mainnet") === 0 ? "mainnet" : "testnet",
+  },
+];
+
+const devnets: readonly Chain[] = process.env.NODE_ENV === "development" ? [devnet, minikube] : [];
+const testnets: readonly Chain[] = [exchangenet];
 
 export const chains = new Map<string, ChainInfo>([...devnets, ...testnets, mainnet]);

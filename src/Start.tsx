@@ -19,8 +19,8 @@ class Start extends React.Component<StartProps, {}> {
         <Row>
           <Col className=""></Col>
           <Col className="col-4">
-            <Link to="/create" className="btn btn-lg btn-block btn-primary">
-              Create new transaction
+            <Link to="/send" className="btn btn-lg btn-block btn-primary">
+              Create a send transaction
             </Link>
           </Col>
           <Col className=""></Col>
